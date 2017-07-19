@@ -1,10 +1,33 @@
-# DotStar driver for CircuitPython 
-# MIT license; Copyright (c) 2017 Ladyada & Damein George (original Neopixel object)
+# DotStar driver for CircuitPython
+# MIT license; Copyright (c) 2017 Ladyada & Damien George (original Neopixel object)
 
 import digitalio
 import time
 
 class DotStar:
+    """
+    A sequence of dotstars.
+
+    :param ~microcontroller.Pin data: The pin to output dotstar data on.
+    :param ~microcontroller.Pin clock: The pin to output dotstar clock on.
+    :param int n: The number of dotstars in the chain
+    :param int bpp: Bytes per pixel (usually 3 or 4)
+    :param float brightness: Brightness of the pixels between 0.0 and 1.0
+
+    Example for Gemma M0:
+
+    .. code-block:: python
+
+        import dotstar
+        from board import *
+
+        RED = 0x100000
+
+        with dotstar.DotStar(APA102_MOSI, APA102_SCK, 1) as pixels:
+            pixels[0] = RED
+            pixels.show()
+    """
+
     ORDER = (1, 0, 2, 3)
     def __init__(self, data, clock, n, bpp=3, brightness=1.0):
         self.dpin = digitalio.DigitalInOut(data)
@@ -37,13 +60,13 @@ class DotStar:
     def __len__(self):
         return self.n
 
-    def set_brightness(self, range):
-        if (range > 1.0):
-            self.brightness = 1.0
-        elif (range < 0):
-            self.brightness = 0.0
-        else:
-            self.brightness = range
+    @property
+    def brightness(self):
+        return self._brightness
+
+    @brightness.setter
+    def brightness(self, brightness):
+        self._brightness = min(max(brightness, 0.0), 1.0)
 
     def fill(self, color):
         for i in range(self.n):
@@ -57,15 +80,18 @@ class DotStar:
                 self.cpin.value = False
                 b = b << 1
 
-    def write(self):
+    def show(self):
         # Tell strip we're ready with many 0x00's
         self.ds_writebytes([0x00, 0x00, 0x00, 0x00])
+        # Each pixel starts with 0xFF, then red/green/blue. Although the data
+        # sheet suggests using a global brightness in the first byte, we don't
+        # do that because it causes further issues with persistence of vision
+        # projects.
+        pixel = [0xFF, 0, 0, 0]
         for i in range(self.n):
-            # each pixel starts with 0xFF, then red/green/blue
-            pixel = [0xFF, 0, 0, 0]
             # scale each pixel by the brightness
             for x in range(3):
-                pixel[x+1] = int(self.buf[i * self.bpp + x] * self.brightness)
+                pixel[x+1] = int(self.buf[i * self.bpp + x] * self._brightness)
             # write this pixel
             self.ds_writebytes(pixel)
         # Tell strip we're done with many 0xFF's
