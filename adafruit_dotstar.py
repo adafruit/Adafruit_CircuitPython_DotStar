@@ -47,13 +47,13 @@ class DotStar:
 
     .. code-block:: python
 
-        import dotstar
+        import adafruit_dotstar
         import time
         from board import *
 
         RED = 0x100000
 
-        with dotstar.DotStar(APA102_SCK, APA102_MOSI, 1) as pixels:
+        with adafruit_dotstar.DotStar(APA102_SCK, APA102_MOSI, 1) as pixels:
             pixels[0] = RED
             time.sleep(2)
     """
