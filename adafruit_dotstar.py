@@ -72,20 +72,31 @@ class DotStar:
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
         self.n = n
-        self.buf = bytearray(n * 4 + 8)
+        self.start_header = 4
+        # Supply one extra clock cycle for each two pixels in the strip.
+        self.end_header = n // 16
+        if n % 16 != 0:
+            n += 1
+        self.buf = bytearray(n * 4 + self.start_header + self.end_header)
         # Four empty bytes to start.
-        for i in range(4):
+        for i in range(self.start_header):
             self.buf[i] = 0x00
-        # Four 0xff bytes at the end.
-        for i in range(4):
-            self.buf[len(self.buf) - 4 + i] = 0xff
+        # Mark the beginnings of each pixel.
+        for i in range(n):
+            self.buf[self.start_header + 4 * i] = 0xff
+        # 0xff bytes at the end.
+        for i in range(self.end_header):
+            self.buf[len(self.buf) - 1 - i] = 0xff
         self.brightness = brightness
         self.auto_write = auto_write
 
     def deinit(self):
         """Blank out the DotStars and release the resources."""
         self.auto_write = False
-        for i in range(4, len(self.buf) - 4):
+        for i in range(self.start_header, len(self.buf) - self.end_header):
+            # Preserve the pixel markers.
+            if i % 4 == 0:
+                continue
             self.buf[i] = 0
         self.show()
         if self.spi:
@@ -104,7 +115,7 @@ class DotStar:
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
     def _set_item(self, index, value):
-        offset = index * 4 + 4
+        offset = index * 4 + self.start_header
         r = 0
         g = 0
         b = 0
@@ -143,7 +154,7 @@ class DotStar:
         if isinstance(index, slice):
             out = []
             for in_i in range(*index.indices(len(self.buf) // self.bpp)):
-                out.append(tuple(self.buf[in_i * 4 + (3 - i) + 4]
+                out.append(tuple(self.buf[in_i * 4 + (3 - i) + self.start_header]
                            for i in range(3)))
             return out
         if index < 0:
@@ -151,7 +162,7 @@ class DotStar:
         if index >= self.n or index < 0:
             raise IndexError
         offset = index * 4
-        return tuple(self.buf[offset + (3 - i) + 4]
+        return tuple(self.buf[offset + (3 - i) + self.start_header]
                      for i in range(3))
 
     def __len__(self):
