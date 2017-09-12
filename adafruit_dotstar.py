@@ -76,8 +76,9 @@ class DotStar:
         # Supply one extra clock cycle for each two pixels in the strip.
         self.end_header = n // 16
         if n % 16 != 0:
-            n += 1
+            self.end_header += 1
         self.buf = bytearray(n * 4 + self.start_header + self.end_header)
+
         # Four empty bytes to start.
         for i in range(self.start_header):
             self.buf[i] = 0x00
@@ -203,18 +204,18 @@ class DotStar:
         it may be done asynchronously."""
         # Create a second output buffer if we need to compute brightness
         buf = self.buf
-        if self.brightness < 0.99:
-            buf = bytearray(n * bpp + 8)
+        if self.brightness < 1.0:
+            buf = bytearray(self.n * 4 + self.start_header + self.end_header)
             # Four empty bytes to start.
-            for i in range(4):
+            for i in range(self.start_header):
                 buf[i] = 0x00
-            for i in range(4, len(self.buf) - 4):
+            for i in range(self.start_header, len(self.buf) - self.end_header - 1):
                 if i % 4 == 0:
-                    buf[i] = self.buf
+                    buf[i] = self.buf[i]
                     continue
-                buf[i] = self.buf[i] * self._brightness
+                buf[i] = int(self.buf[i] * self._brightness)
             # Four 0xff bytes at the end.
-            for i in range(4):
+            for i in range(self.end_header):
                 buf[len(self.buf) - 4 + i] = 0xff
 
         if self.spi:
