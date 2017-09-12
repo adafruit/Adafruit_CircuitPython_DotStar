@@ -204,7 +204,7 @@ class DotStar:
         it may be done asynchronously."""
         # Create a second output buffer if we need to compute brightness
         buf = self.buf
-        if self.brightness < 0.99:
+        if self.brightness < 1.0:
             buf = bytearray(self.n * 4 + self.start_header + self.end_header)
             # Four empty bytes to start.
             for i in range(self.start_header):
