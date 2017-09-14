@@ -72,33 +72,32 @@ class DotStar:
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
         self.n = n
-        self.start_header = 4
+        self.start_header_size = 4
         # Supply one extra clock cycle for each two pixels in the strip.
-        self.end_header = n // 16
+        self.end_header_size = n // 16
         if n % 16 != 0:
-            self.end_header += 1
-        self.buf = bytearray(n * 4 + self.start_header + self.end_header)
+            self.end_header_size += 1
+        self.buf = bytearray(n * 4 + self.start_header_size + self.end_header_size)
+        self.end_header_index = len(self.buf) - self.end_header_size;
 
         # Four empty bytes to start.
-        for i in range(self.start_header):
+        for i in range(self.start_header_size):
             self.buf[i] = 0x00
         # Mark the beginnings of each pixel.
-        for i in range(n):
-            self.buf[self.start_header + 4 * i] = 0xff
+        for i in range(self.start_header_size, self.end_header_index, 4):
+            self.buf[i] = 0xff
         # 0xff bytes at the end.
-        for i in range(self.end_header):
-            self.buf[len(self.buf) - 1 - i] = 0xff
+        for i in range(self.end_header_index, len(self.buf)):
+            self.buf[i] = 0xff
         self.brightness = brightness
         self.auto_write = auto_write
 
     def deinit(self):
         """Blank out the DotStars and release the resources."""
         self.auto_write = False
-        for i in range(self.start_header, len(self.buf) - self.end_header):
-            # Preserve the pixel markers.
-            if i % 4 == 0:
-                continue
-            self.buf[i] = 0
+        for i in range(self.start_header_size, self.end_header_index):
+            if i % 4 != 0:
+                self.buf[i] = 0
         self.show()
         if self.spi:
             self.spi.deinit()
@@ -116,7 +115,7 @@ class DotStar:
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
     def _set_item(self, index, value):
-        offset = index * 4 + self.start_header
+        offset = index * 4 + self.start_header_size
         r = 0
         g = 0
         b = 0
@@ -130,7 +129,7 @@ class DotStar:
         # sheet suggests using a global brightness in the first byte, we don't
         # do that because it causes further issues with persistence of vision
         # projects.
-        self.buf[offset] = 0xff
+        self.buf[offset] = 0xff    # redundant; should already be set
         self.buf[offset + 1] = b
         self.buf[offset + 2] = g
         self.buf[offset + 3] = r
@@ -154,8 +153,8 @@ class DotStar:
     def __getitem__(self, index):
         if isinstance(index, slice):
             out = []
-            for in_i in range(*index.indices(len(self.buf) // self.bpp)):
-                out.append(tuple(self.buf[in_i * 4 + (3 - i) + self.start_header]
+            for in_i in range(*index.indices(len(self.buf) // 4)):
+                out.append(tuple(self.buf[in_i * 4 + (3 - i) + self.start_header_size]
                            for i in range(3)))
             return out
         if index < 0:
@@ -163,7 +162,7 @@ class DotStar:
         if index >= self.n or index < 0:
             raise IndexError
         offset = index * 4
-        return tuple(self.buf[offset + (3 - i) + self.start_header]
+        return tuple(self.buf[offset + (3 - i) + self.start_header_size]
                      for i in range(3))
 
     def __len__(self):
@@ -205,18 +204,15 @@ class DotStar:
         # Create a second output buffer if we need to compute brightness
         buf = self.buf
         if self.brightness < 1.0:
-            buf = bytearray(self.n * 4 + self.start_header + self.end_header)
+            buf = bytearray(self.buf)
             # Four empty bytes to start.
-            for i in range(self.start_header):
+            for i in range(self.start_header_size):
                 buf[i] = 0x00
-            for i in range(self.start_header, len(self.buf) - self.end_header - 1):
-                if i % 4 == 0:
-                    buf[i] = self.buf[i]
-                    continue
-                buf[i] = int(self.buf[i] * self._brightness)
+            for i in range(self.start_header_size, self.end_header_index):
+                buf[i] = self.buf[i] if i %4 == 0 else int(self.buf[i] * self._brightness)
             # Four 0xff bytes at the end.
-            for i in range(self.end_header):
-                buf[len(self.buf) - 4 + i] = 0xff
+            for i in range(self.end_header_index, len(buf)):
+                buf[i] = 0xff
 
         if self.spi:
             self.spi.write(buf)
