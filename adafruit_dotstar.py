@@ -30,6 +30,7 @@
 """
 import busio
 import digitalio
+import math
 import time
 
 class DotStar:
