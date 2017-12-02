@@ -2,8 +2,8 @@
 Adafruit CircuitPython DotStar
 ==============================
 
-.. image:: https://readthedocs.org/projects/adafruit-circuitpython-neopixel/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/neopixel/en/latest/
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-dotstar/badge/?version=latest
+    :target: https://circuitpython.readthedocs.io/projects/dotstar/en/latest/
     :alt: Documentation Status
 
 .. image :: https://badges.gitter.im/adafruit/circuitpython.svg
