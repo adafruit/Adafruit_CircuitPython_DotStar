@@ -28,10 +28,13 @@
 
 * Author(s): Damien P. George, Limor Fried & Scott Shawcroft
 """
+import math
+
 import busio
 import digitalio
-import math
-import time
+
+__version__ = "0.0.0-auto.0"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 class DotStar:
     """
@@ -41,7 +44,8 @@ class DotStar:
     :param ~microcontroller.Pin data: The pin to output dotstar data on.
     :param int n: The number of dotstars in the chain
     :param float brightness: Brightness of the pixels between 0.0 and 1.0
-    :param bool auto_write: True if the dotstars should immediately change when set. If False, `show` must be called explicitly.
+    :param bool auto_write: True if the dotstars should immediately change when
+        set. If False, `show` must be called explicitly.
 
 
     Example for Gemma M0:
@@ -59,37 +63,38 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(self, clock, data, n, brightness=1.0, auto_write=True):
-        self.spi = None
+    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True):
+        self._spi = None
         try:
-            self.spi = busio.SPI(clock, MOSI=data)
-            while not self.spi.try_lock():
+            self._spi = busio.SPI(clock, MOSI=data)
+            while not self._spi.try_lock():
                 pass
-            self.spi.configure(baudrate=4000000)
+            self._spi.configure(baudrate=4000000)
         except ValueError:
             self.dpin = digitalio.DigitalInOut(data)
             self.cpin = digitalio.DigitalInOut(clock)
             self.dpin.direction = digitalio.Direction.OUTPUT
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
-        self.n = n
+        self._n = n
         self.start_header_size = 4
         # Supply one extra clock cycle for each two pixels in the strip.
         self.end_header_size = n // 16
         if n % 16 != 0:
             self.end_header_size += 1
-        self.buf = bytearray(n * 4 + self.start_header_size + self.end_header_size)
-        self.end_header_index = len(self.buf) - self.end_header_size;
+        self._buf = bytearray(n * 4 + self.start_header_size + self.end_header_size)
+        self.end_header_index = len(self._buf) - self.end_header_size
 
         # Four empty bytes to start.
         for i in range(self.start_header_size):
-            self.buf[i] = 0x00
+            self._buf[i] = 0x00
         # Mark the beginnings of each pixel.
         for i in range(self.start_header_size, self.end_header_index, 4):
-            self.buf[i] = 0xff
+            self._buf[i] = 0xff
         # 0xff bytes at the end.
-        for i in range(self.end_header_index, len(self.buf)):
-            self.buf[i] = 0xff
+        for i in range(self.end_header_index, len(self._buf)):
+            self._buf[i] = 0xff
+        self._brightness = 1.0
         self.brightness = brightness
         self.auto_write = auto_write
 
@@ -98,10 +103,10 @@ class DotStar:
         self.auto_write = False
         for i in range(self.start_header_size, self.end_header_index):
             if i % 4 != 0:
-                self.buf[i] = 0
+                self._buf[i] = 0
         self.show()
-        if self.spi:
-            self.spi.deinit()
+        if self._spi:
+            self._spi.deinit()
         else:
             self.dpin.deinit()
             self.cpin.deinit()
@@ -120,7 +125,7 @@ class DotStar:
         r = 0
         g = 0
         b = 0
-        if type(value) == int:
+        if isinstance(value, int):
             r = value >> 16
             g = (value >> 8) & 0xff
             b = value & 0xff
@@ -130,10 +135,10 @@ class DotStar:
         # sheet suggests using a global brightness in the first byte, we don't
         # do that because it causes further issues with persistence of vision
         # projects.
-        self.buf[offset] = 0xff    # redundant; should already be set
-        self.buf[offset + 1] = b
-        self.buf[offset + 2] = g
-        self.buf[offset + 3] = r
+        self._buf[offset] = 0xff    # redundant; should already be set
+        self._buf[offset + 1] = b
+        self._buf[offset + 2] = g
+        self._buf[offset + 3] = r
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
@@ -154,20 +159,20 @@ class DotStar:
     def __getitem__(self, index):
         if isinstance(index, slice):
             out = []
-            for in_i in range(*index.indices(len(self.buf) // 4)):
-                out.append(tuple(self.buf[in_i * 4 + (3 - i) + self.start_header_size]
-                           for i in range(3)))
+            for in_i in range(*index.indices(len(self._buf) // 4)):
+                out.append(
+                    tuple(self._buf[in_i * 4 + (3 - i) + self.start_header_size] for i in range(3)))
             return out
         if index < 0:
             index += len(self)
-        if index >= self.n or index < 0:
+        if index >= self._n or index < 0:
             raise IndexError
         offset = index * 4
-        return tuple(self.buf[offset + (3 - i) + self.start_header_size]
+        return tuple(self._buf[offset + (3 - i) + self.start_header_size]
                      for i in range(3))
 
     def __len__(self):
-        return self.n
+        return self._n
 
     @property
     def brightness(self):
@@ -182,15 +187,15 @@ class DotStar:
         """Colors all pixels the given ***color***."""
         auto_write = self.auto_write
         self.auto_write = False
-        for i in range(len(self)):
+        for i, _ in enumerate(self):
             self[i] = color
         if auto_write:
             self.show()
         self.auto_write = auto_write
 
-    def ds_writebytes(self, buf):
+    def _ds_writebytes(self, buf):
         for b in buf:
-            for i in range(8):
+            for _ in range(8):
                 self.cpin.value = True
                 self.dpin.value = (b & 0x80)
                 self.cpin.value = False
@@ -203,20 +208,20 @@ class DotStar:
         The colors may or may not be showing after this function returns because
         it may be done asynchronously."""
         # Create a second output buffer if we need to compute brightness
-        buf = self.buf
+        buf = self._buf
         if self.brightness < 1.0:
-            buf = bytearray(self.buf)
+            buf = bytearray(self._buf)
             # Four empty bytes to start.
             for i in range(self.start_header_size):
                 buf[i] = 0x00
             for i in range(self.start_header_size, self.end_header_index):
-                buf[i] = self.buf[i] if i %4 == 0 else int(self.buf[i] * self._brightness)
+                buf[i] = self._buf[i] if i %4 == 0 else int(self._buf[i] * self._brightness)
             # Four 0xff bytes at the end.
             for i in range(self.end_header_index, len(buf)):
                 buf[i] = 0xff
 
-        if self.spi:
-            self.spi.write(buf)
+        if self._spi:
+            self._spi.write(buf)
         else:
-            self.ds_writebytes(buf)
+            self._ds_writebytes(buf)
             self.cpin.value = False
