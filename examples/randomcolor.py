@@ -12,15 +12,15 @@ dots = dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.2)
 ######################### HELPERS ##############################
 
 # a random color 0 -> 224
-def rndc():
+def random_color():
     return random.randrange(0, 7) * 32
 
 ######################### MAIN LOOP ##############################
-n = len(dots)
+n_dots = len(dots)
 while True:
-    #fill each dot with a random color1
-    for dot in range(n):
-        dots[dot] = (rndc(), rndc(), rndc())
+    #fill each dot with a random color
+    for dot in range(n_dots):
+        dots[dot] = (random_color(), random_color(), random_color())
 
     # show all dots in strip
     dots.show()
