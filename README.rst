@@ -10,6 +10,10 @@ Adafruit CircuitPython DotStar
     :target: https://adafru.it/discord
     :alt: Discord
 
+.. image:: https://travis-ci.org/adafruit/Adafruit_CircuitPython_DotStar.svg?branch=master
+    :target: https://travis-ci.org/adafruit/Adafruit_CircuitPython_DotStar
+    :alt: Build Status
+
 Higher level DotStar driver that presents the strip as a sequence. It is the
 same api as the `NeoPixel library <https://github.com/adafruit/Adafruit_CircuitPython_NeoPixel>`_.
 
