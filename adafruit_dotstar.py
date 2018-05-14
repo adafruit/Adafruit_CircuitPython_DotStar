@@ -37,6 +37,7 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
+LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 # Pixel color order constants
 RGB = (0, 1, 2)
@@ -171,14 +172,14 @@ class DotStar:
         else:
             brightness = 100
 
-        brightness_byte = ceil(brightness * 31) & 0b00011111
+        brightness_byte = math.ceil(brightness * 31) & 0b00011111
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
         self._buf[offset] = brightness_byte | LED_START
-        self._buf[offset + 1] = int(rgb[self.pixel_order[0]] * self.brightness)
-        self._buf[offset + 2] = int(rgb[self.pixel_order[1]] * self.brightness)
-        self._buf[offset + 3] = (rgb[self.pixel_order[2]] * self.brightness)
+        self._buf[offset + 1] = int(rgb[self.pixel_order[0]])
+        self._buf[offset + 2] = int(rgb[self.pixel_order[1]])
+        self._buf[offset + 3] = (rgb[self.pixel_order[2]])
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
@@ -249,7 +250,23 @@ class DotStar:
 
         The colors may or may not be showing after this function returns because
         it may be done asynchronously."""
+        # Create a second output buffer if we need to compute brightness
+        buf = self._buf
+        if self.brightness < 1.0:
+            buf = bytearray(self._buf)
+            # Four empty bytes to start.
+            for i in range(START_HEADER_SIZE):
+                buf[i] = 0x00
+            for i in range(START_HEADER_SIZE, self.end_header_index):
+                buf[i] = self._buf[i] if i % 4 == 0 else math.ceil(self._buf[i] * self._brightness)
+            # Four 0xff bytes at the end.
+            for i in range(self.end_header_index, len(buf)):
+                buf[i] = 0xff
 
+        if self._spi:
+            self._spi.write(buf)
+        else:
+            self._ds_writebytes(buf)
         if self._spi:
             self._spi.write(self._buf)
         else:
