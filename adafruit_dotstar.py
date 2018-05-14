@@ -159,19 +159,16 @@ class DotStar:
         if isinstance(value, int):
             rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
 
-        offset = index * 4 + START_HEADER_SIZE
-        rgb = value
-
         if len(value) == 4:
             brightness = value[-1]
             rgb = value[:3]
         else:
-            brightness = 100
+            brightness = 1
 
-        brightness_byte = math.ceil(brightness * 31) & 0b00011111
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
+        brightness_byte = math.ceil(brightness * 31) & 0b00011111
         self._buf[offset] = brightness_byte | LED_START
         self._buf[offset + 1] = int(rgb[self.pixel_order[0]])
         self._buf[offset + 2] = int(rgb[self.pixel_order[1]])
