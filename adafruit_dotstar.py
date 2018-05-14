@@ -37,6 +37,7 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
+LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 # Pixel color order constants
 RGB = (0, 1, 2)
@@ -137,16 +138,38 @@ class DotStar:
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
     def _set_item(self, index, value):
+        """
+        value can be one of three things:
+                a (r,g,b) list/tuple
+                a (r,g,b, brightness) list/tuple
+                a single, longer int that contains RGB values, like 0xFFFFFF
+            brightness, if specified should be a float 0-1
+
+        Set a pixel value. You can set per-pixel brightness here, if it's not passed it
+        will use the max value for pixel brightness value, which is a good default.
+
+        Important notes about the per-pixel brightness - it's accomplished by
+        PWMing the entire output of the LED, and that PWM is at a much
+        slower clock than the rest of the LEDs. This can cause problems in
+        Persistence of Vision Applications
+        """
+
         offset = index * 4 + START_HEADER_SIZE
         rgb = value
         if isinstance(value, int):
             rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
 
-        # Each pixel starts with 0xFF, then red/green/blue. Although the data
-        # sheet suggests using a global brightness in the first byte, we don't
-        # do that because it causes further issues with persistence of vision
-        # projects.
-        self._buf[offset] = 0xff    # redundant; should already be set
+        if len(value) == 4:
+            brightness = value[-1]
+            rgb = value[:3]
+        else:
+            brightness = 1
+
+        # LED startframe is three "1" bits, followed by 5 brightness bits
+        # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
+        # vary based on hardware
+        brightness_byte = math.ceil(brightness * 31) & 0b00011111
+        self._buf[offset] = brightness_byte | LED_START
         self._buf[offset + 1] = rgb[self.pixel_order[0]]
         self._buf[offset + 2] = rgb[self.pixel_order[1]]
         self._buf[offset + 3] = rgb[self.pixel_order[2]]
