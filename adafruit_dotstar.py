@@ -137,7 +137,7 @@ class DotStar:
 
     def _set_item(self, index, value):
         offset = index * 4 + self.start_header_size
-        rbg = value
+        rgb = value
         if isinstance(value, int):
             rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
 
