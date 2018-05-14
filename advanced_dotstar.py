@@ -1,4 +1,6 @@
-from adafruit_dotstar import DotStar, START_HEADER_SIZE
+# PixelOrder is unused but I want people to be able to import it from here
+from adafruit_dotstar import DotStar, START_HEADER_SIZE, PixelOrder
+from math import ceil
 """
 This is different than the standard Adafruit Dotstar library because it
 allows you to use the hardware brightness value on a per-pixel basis.
@@ -12,7 +14,7 @@ you can override it if you use set_pixel
 LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 
-class AdvancedDotstar(DotStar):
+class AdvancedDotStar(DotStar):
 
     def _set_item(self, index, value):
         """
@@ -33,13 +35,12 @@ class AdvancedDotstar(DotStar):
         rgb = value
 
         if len(value) == 4:
-            brightness = value[4]
+            brightness = value[-1]
             rgb = value[:3]
         else:
             brightness = self.brightness
 
-        brightness_byte = int(brightness * 31) & 0b00011111
-
+        brightness_byte = ceil(brightness * 31) & 0b00011111
         # LED startframe is three "1" bits, followed by 5 brightness bits
 
         self._buf[offset] = brightness_byte | LED_START
