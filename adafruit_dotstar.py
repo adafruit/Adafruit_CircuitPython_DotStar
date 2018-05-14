@@ -263,8 +263,4 @@ class DotStar:
             self._spi.write(buf)
         else:
             self._ds_writebytes(buf)
-        if self._spi:
-            self._spi.write(self._buf)
-        else:
-            self._ds_writebytes(self._buf)
             self.cpin.value = False
