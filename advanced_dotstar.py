@@ -1,7 +1,4 @@
 from adafruit_dotstar import DotStar, START_HEADER_SIZE
-LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
-
-
 """
 This is different than the standard Adafruit Dotstar library because it
 allows you to use the hardware brightness value on a per-pixel basis.
@@ -11,6 +8,8 @@ adafruit dotstar/neopixel libraries should match.
 The brightness argument here is the default brightness of each pixel, but
 you can override it if you use set_pixel
 """
+
+LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 
 class AdvancedDotstar(DotStar):
