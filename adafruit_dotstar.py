@@ -145,7 +145,7 @@ class DotStar:
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
-            start, stop, step = index.indices(len(self))
+            start, stop, step = index.indices(self._n)
             length = stop - start
             if step != 0:
                 length = math.ceil(length / step)
