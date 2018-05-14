@@ -36,6 +36,15 @@ import digitalio
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
+# Pixel color order constants
+RGB = (0, 1, 2)
+RBG = (0, 2, 1)
+GRB = (1, 0, 2)
+GBR = (1, 2, 0)
+BRG = (2, 0, 1)
+BGR = (2, 1, 0)
+
+
 class DotStar:
     """
     A sequence of dotstars.
@@ -46,6 +55,9 @@ class DotStar:
     :param float brightness: Brightness of the pixels between 0.0 and 1.0
     :param bool auto_write: True if the dotstars should immediately change when
         set. If False, `show` must be called explicitly.
+    :param tuple pixel_order: Set the pixel order on the strip - different
+         strips implement this differently. If you send red, and it looks blue
+         or green on the strip, modify this! It should be one of the values above
 
 
     Example for Gemma M0:
@@ -63,7 +75,7 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True):
+    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
@@ -84,7 +96,7 @@ class DotStar:
             self.end_header_size += 1
         self._buf = bytearray(n * 4 + self.start_header_size + self.end_header_size)
         self.end_header_index = len(self._buf) - self.end_header_size
-
+        self.pixel_order = pixel_order
         # Four empty bytes to start.
         for i in range(self.start_header_size):
             self._buf[i] = 0x00
@@ -125,23 +137,18 @@ class DotStar:
 
     def _set_item(self, index, value):
         offset = index * 4 + self.start_header_size
-        r = 0
-        g = 0
-        b = 0
+        rbg = value
         if isinstance(value, int):
-            r = value >> 16
-            g = (value >> 8) & 0xff
-            b = value & 0xff
-        else:
-            r, g, b = value
+            rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
+
         # Each pixel starts with 0xFF, then red/green/blue. Although the data
         # sheet suggests using a global brightness in the first byte, we don't
         # do that because it causes further issues with persistence of vision
         # projects.
         self._buf[offset] = 0xff    # redundant; should already be set
-        self._buf[offset + 1] = b
-        self._buf[offset + 2] = g
-        self._buf[offset + 3] = r
+        self._buf[offset + 1] = rgb[self.pixel_order[0]]
+        self._buf[offset + 2] = rgb[self.pixel_order[1]]
+        self._buf[offset + 3] = rgb[self.pixel_order[2]]
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
@@ -220,7 +227,7 @@ class DotStar:
             for i in range(self.start_header_size):
                 buf[i] = 0x00
             for i in range(self.start_header_size, self.end_header_index):
-                buf[i] = self._buf[i] if i %4 == 0 else int(self._buf[i] * self._brightness)
+                buf[i] = self._buf[i] if i % 4 == 0 else int(self._buf[i] * self._brightness)
             # Four 0xff bytes at the end.
             for i in range(self.end_header_index, len(buf)):
                 buf[i] = 0xff
