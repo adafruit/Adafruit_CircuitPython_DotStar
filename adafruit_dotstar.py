@@ -251,7 +251,7 @@ class DotStar:
             for i in range(START_HEADER_SIZE):
                 buf[i] = 0x00
             for i in range(START_HEADER_SIZE, self.end_header_index):
-                buf[i] = self._buf[i] if i % 4 == 0 else math.ceil(self._buf[i] * self._brightness)
+                buf[i] = self._buf[i] if i % 4 == 0 else int(self._buf[i] * self._brightness)
             # Four 0xff bytes at the end.
             for i in range(self.end_header_index, len(buf)):
                 buf[i] = 0xff
