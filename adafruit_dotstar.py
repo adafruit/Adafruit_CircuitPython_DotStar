@@ -137,19 +137,48 @@ class DotStar:
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
     def _set_item(self, index, value):
+        """
+            value can be one of three things:
+            either a (r,g,b) list/tuple
+            a (r,g,b, brightness) list or tuple
+            or a single int that contains RGB values, like 0xFFFFFF
+            brightness, if specified should be a float
+
+        Set a pixel value. You can set per-pixel brightness here, if it's not passed it
+        will use send the max value for pixel brightness value, which is a good default.
+
+        If the strip wide brightness value is <1, we'll use it to scale the rgb values.
+        This may seem like strange behavior, but we're trying to not expose the per-pixel brightness
+        unless you specifically request it.
+
+        Important notes about the per-pixel brightness - it's accomplished by
+        PWMing the entire output of the LED, and that PWM is at a much
+        slower clock than the rest of the LEDs. This can cause problems in
+        Persistence of Vision Applications
+        """
+
         offset = index * 4 + START_HEADER_SIZE
         rgb = value
         if isinstance(value, int):
             rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
 
-        # Each pixel starts with 0xFF, then red/green/blue. Although the data
-        # sheet suggests using a global brightness in the first byte, we don't
-        # do that because it causes further issues with persistence of vision
-        # projects.
-        self._buf[offset] = 0xff    # redundant; should already be set
-        self._buf[offset + 1] = rgb[self.pixel_order[0]]
-        self._buf[offset + 2] = rgb[self.pixel_order[1]]
-        self._buf[offset + 3] = rgb[self.pixel_order[2]]
+        offset = index * 4 + START_HEADER_SIZE
+        rgb = value
+
+        if len(value) == 4:
+            brightness = value[-1]
+            rgb = value[:3]
+        else:
+            brightness = 100
+
+        brightness_byte = ceil(brightness * 31) & 0b00011111
+        # LED startframe is three "1" bits, followed by 5 brightness bits
+        # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
+        # vary based on hardware
+        self._buf[offset] = brightness_byte | LED_START
+        self._buf[offset + 1] = int(rgb[self.pixel_order[0]] * self.brightness)
+        self._buf[offset + 2] = int(rgb[self.pixel_order[1]] * self.brightness)
+        self._buf[offset + 3] = (rgb[self.pixel_order[2]] * self.brightness)
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
@@ -220,21 +249,9 @@ class DotStar:
 
         The colors may or may not be showing after this function returns because
         it may be done asynchronously."""
-        # Create a second output buffer if we need to compute brightness
-        buf = self._buf
-        if self.brightness < 1.0:
-            buf = bytearray(self._buf)
-            # Four empty bytes to start.
-            for i in range(START_HEADER_SIZE):
-                buf[i] = 0x00
-            for i in range(START_HEADER_SIZE, self.end_header_index):
-                buf[i] = self._buf[i] if i % 4 == 0 else int(self._buf[i] * self._brightness)
-            # Four 0xff bytes at the end.
-            for i in range(self.end_header_index, len(buf)):
-                buf[i] = 0xff
 
         if self._spi:
-            self._spi.write(buf)
+            self._spi.write(self._buf)
         else:
-            self._ds_writebytes(buf)
+            self._ds_writebytes(self._buf)
             self.cpin.value = False
