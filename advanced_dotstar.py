@@ -1,5 +1,7 @@
-# PixelOrder is unused but I want people to be able to import it from here
-from adafruit_dotstar import DotStar, START_HEADER_SIZE, PixelOrder
+from adafruit_dotstar import DotStar, START_HEADER_SIZE
+# These are unused is unused but I want people to be able to import it from here
+from adafruit_dotstar import RGB, RBG, GRB, GBR, BRG, BGR
+
 from math import ceil
 """
 This is different than the standard Adafruit Dotstar library because it
