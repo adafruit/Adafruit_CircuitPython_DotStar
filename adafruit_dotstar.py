@@ -139,18 +139,14 @@ class DotStar:
 
     def _set_item(self, index, value):
         """
-            value can be one of three things:
-            either a (r,g,b) list/tuple
-            a (r,g,b, brightness) list or tuple
-            or a single int that contains RGB values, like 0xFFFFFF
-            brightness, if specified should be a float
+        value can be one of three things:
+                a (r,g,b) list/tuple
+                a (r,g,b, brightness) list/tuple
+                a single, longer int that contains RGB values, like 0xFFFFFF
+            brightness, if specified should be a float 0-1
 
         Set a pixel value. You can set per-pixel brightness here, if it's not passed it
-        will use send the max value for pixel brightness value, which is a good default.
-
-        If the strip wide brightness value is <1, we'll use it to scale the rgb values.
-        This may seem like strange behavior, but we're trying to not expose the per-pixel brightness
-        unless you specifically request it.
+        will use the max value for pixel brightness value, which is a good default.
 
         Important notes about the per-pixel brightness - it's accomplished by
         PWMing the entire output of the LED, and that PWM is at a much
