@@ -170,9 +170,9 @@ class DotStar:
         # vary based on hardware
         brightness_byte = math.ceil(brightness * 31) & 0b00011111
         self._buf[offset] = brightness_byte | LED_START
-        self._buf[offset + 1] = int(rgb[self.pixel_order[0]])
-        self._buf[offset + 2] = int(rgb[self.pixel_order[1]])
-        self._buf[offset + 3] = (rgb[self.pixel_order[2]])
+        self._buf[offset + 1] = rgb[self.pixel_order[0]]
+        self._buf[offset + 2] = rgb[self.pixel_order[1]]
+        self._buf[offset + 3] = rgb[self.pixel_order[2]]
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
