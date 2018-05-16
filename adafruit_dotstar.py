@@ -171,7 +171,6 @@ class DotStar:
         if self.brightness < 1.0:
             rgb = [int(val * self._brightness) for val in rgb]
 
-
         brightness_byte = math.ceil(brightness * 31) & 0b00011111
         self._buf[offset] = brightness_byte | LED_START
         self._buf[offset + 1] = rgb[self.pixel_order[0]]
@@ -220,9 +219,10 @@ class DotStar:
     @brightness.setter
     def brightness(self, brightness):
         brightness = min(max(brightness, 0.0), 1.0)
-        old_brightness = self.brightness
+        # scaling factor - new brightness / old.
+        # ex: going from 0.2 to 1 would be 1/0.2 = 5.0 scale for each color val
+        correction_factor = brightness / self.brightness
         self._brightness = brightness
-        correction_factor = brightness/old_brightness
 
         if correction_factor != 1.0:
             # We got a new global brightness, update all pixels in _buf
