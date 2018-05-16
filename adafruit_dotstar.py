@@ -108,7 +108,7 @@ class DotStar:
         # 0xff bytes at the end.
         for i in range(self.end_header_index, len(self._buf)):
             self._buf[i] = 0xff
-        self._truebuf = [(255,255,255) for _ in range(n)]
+        self._truebuf = bytearray([0xff for _ in range(n * 3)])
         self._brightness = 1.0
         # Set auto_write to False temporarily so brightness setter does _not_
         # call show() while in __init__.
@@ -169,7 +169,8 @@ class DotStar:
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
-        self._truebuf[index] = rgb
+        self._truebuf[index * 3: index * 3 + 2] = rgb
+
         if self.brightness < 1.0:
             rgb = [int(val * self._brightness) for val in rgb]
 
@@ -223,13 +224,9 @@ class DotStar:
         self._brightness = min(max(brightness, 0.0), 1.0)
 
         # We got a new global brightness, update all pixels in _buf
-        for index, rgb in enumerate(self._truebuf):
-            offset = index * 4 + START_HEADER_SIZE
-            rgb = [int(val * self._brightness) for val in rgb]
-
-            self._buf[offset + 1] = rgb[self.pixel_order[0]]
-            self._buf[offset + 2] = rgb[self.pixel_order[1]]
-            self._buf[offset + 3] = rgb[self.pixel_order[2]]
+        for index, val in enumerate(self._truebuf):
+            offset = index * (4 / 3) + START_HEADER_SIZE
+            self._buf[offset] = int(val * self._brightness)
 
         if self.auto_write:
             self.show()
