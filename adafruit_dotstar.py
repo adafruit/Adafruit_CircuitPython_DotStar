@@ -168,6 +168,10 @@ class DotStar:
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
+        if self.brightness < 1.0:
+            rgb = [int(val * self._brightness) for val in rgb]
+
+
         brightness_byte = math.ceil(brightness * 31) & 0b00011111
         self._buf[offset] = brightness_byte | LED_START
         self._buf[offset + 1] = rgb[self.pixel_order[0]]
@@ -215,7 +219,18 @@ class DotStar:
 
     @brightness.setter
     def brightness(self, brightness):
-        self._brightness = min(max(brightness, 0.0), 1.0)
+        brightness = min(max(brightness, 0.0), 1.0)
+        old_brightness = self.brightness
+        self._brightness = brightness
+        correction_factor = brightness/old_brightness
+
+        if correction_factor != 1.0:
+            # We got a new global brightness, update all pixels in _buf
+            for i in range(START_HEADER_SIZE, self.end_header_index):
+                # only color values, not headers
+                if i % 4 != 0:
+                    self._buf[i] = int(self._buf[i] * correction_factor)
+
         if self.auto_write:
             self.show()
 
@@ -243,21 +258,9 @@ class DotStar:
 
         The colors may or may not be showing after this function returns because
         it may be done asynchronously."""
-        # Create a second output buffer if we need to compute brightness
-        buf = self._buf
-        if self.brightness < 1.0:
-            buf = bytearray(self._buf)
-            # Four empty bytes to start.
-            for i in range(START_HEADER_SIZE):
-                buf[i] = 0x00
-            for i in range(START_HEADER_SIZE, self.end_header_index):
-                buf[i] = self._buf[i] if i % 4 == 0 else int(self._buf[i] * self._brightness)
-            # Four 0xff bytes at the end.
-            for i in range(self.end_header_index, len(buf)):
-                buf[i] = 0xff
 
         if self._spi:
-            self._spi.write(buf)
+            self._spi.write(self._buf)
         else:
-            self._ds_writebytes(buf)
+            self._ds_writebytes(self._buf)
             self.cpin.value = False
