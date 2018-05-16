@@ -37,6 +37,7 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
+GAMMA_CORRECT_FACTOR = 2.8
 LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 # Pixel color order constants
@@ -78,7 +79,15 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR):
+    def __init__(self,
+                 clock,
+                 data,
+                 n,
+                 *,
+                 brightness=1.0,
+                 auto_write=True,
+                 pixel_order=BGR,
+                 gamma_correct=False):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
@@ -91,6 +100,7 @@ class DotStar:
             self.dpin.direction = digitalio.Direction.OUTPUT
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
+        self.gamma_correct = gamma_correct
         self._n = n
         # Supply one extra clock cycle for each two pixels in the strip.
         self.end_header_size = n // 16
@@ -165,6 +175,8 @@ class DotStar:
         else:
             brightness = 1
 
+        if self.gamma_correct:
+            rgb = map(self.gamma_correct, rgb)
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
@@ -207,6 +219,11 @@ class DotStar:
 
     def __len__(self):
         return self._n
+
+    def gamma_correct(self, led_val):
+        max_val = (1 << 8) - 1.0
+        corrected = pow(led_val / max_val, GAMMA_CORRECT_FACTOR) * max_val
+        return int(min(255, max(0, corrected)))
 
     @property
     def brightness(self):
