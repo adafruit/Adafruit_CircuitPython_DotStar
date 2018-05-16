@@ -169,7 +169,7 @@ class DotStar:
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
-        self._truebuf = rgb
+        self._truebuf[index] = rgb
         if self.brightness < 1.0:
             rgb = [int(val * self._brightness) for val in rgb]
 
