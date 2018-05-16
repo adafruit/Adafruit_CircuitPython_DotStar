@@ -220,7 +220,7 @@ class DotStar:
     def brightness(self, brightness):
         brightness = min(max(brightness, 0.0), 1.0)
         # scaling factor - new brightness / old.
-        # ex: going from 0.2 to 1 would be 1/0.2 = 5.0 scale for each color val
+        # ex: going from 0.2 to 1 would be 1/0.2, so 5.0 * each color value
         correction_factor = brightness / self.brightness
         self._brightness = brightness
 
