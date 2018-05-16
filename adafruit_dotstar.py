@@ -229,7 +229,8 @@ class DotStar:
             for i in range(START_HEADER_SIZE, self.end_header_index):
                 # only color values, not headers
                 if i % 4 != 0:
-                    self._buf[i] = int(self._buf[i] * correction_factor)
+                    new_val = int(self._buf[i] * correction_factor)
+                    self._buf[i] = min(max(new_val, 0), 255)
 
         if self.auto_write:
             self.show()
