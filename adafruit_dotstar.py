@@ -79,6 +79,7 @@ class DotStar:
     """
 
     def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR):
+        # pylint: disable=too-many-instance-attributes
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
