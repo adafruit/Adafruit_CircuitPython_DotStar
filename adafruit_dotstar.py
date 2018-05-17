@@ -224,9 +224,11 @@ class DotStar:
         self._brightness = min(max(brightness, 0.0), 1.0)
 
         # We got a new global brightness, update all pixels in _buf
-        for index, val in enumerate(self._truebuf):
-            offset = index * (4 / 3) + START_HEADER_SIZE
-            self._buf[offset] = int(val * self._brightness)
+        truebuf_idx = 0
+        for i in range(START_HEADER_SIZE, self.end_header_index):
+            if i % 4 != 0:
+                self._buf[i] = self._truebuf[truebuf_idx] * self._brightness
+                truebuf_idx += 1
 
         if self.auto_write:
             self.show()
