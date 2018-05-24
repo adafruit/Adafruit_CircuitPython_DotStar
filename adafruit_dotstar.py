@@ -28,8 +28,6 @@
 
 * Author(s): Damien P. George, Limor Fried & Scott Shawcroft
 """
-import math
-
 import busio
 import digitalio
 
@@ -160,15 +158,17 @@ class DotStar:
             rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
 
         if len(value) == 4:
-            brightness = value[-1]
-            rgb = value[:3]
+            brightness = value[3]
+            # Ignore value[3] below.
         else:
             brightness = 1
 
         # LED startframe is three "1" bits, followed by 5 brightness bits
         # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
         # vary based on hardware
-        brightness_byte = math.ceil(brightness * 31) & 0b00011111
+        # same as math.ceil(brightness * 31) & 0b00011111
+        # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
+        brightness_byte = 32 - int(32 - brightness * 31) & 0b00011111
         self._buf[offset] = brightness_byte | LED_START
         self._buf[offset + 1] = rgb[self.pixel_order[0]]
         self._buf[offset + 2] = rgb[self.pixel_order[1]]
@@ -179,7 +179,9 @@ class DotStar:
             start, stop, step = index.indices(self._n)
             length = stop - start
             if step != 0:
-                length = math.ceil(length / step)
+                # same as math.ceil(length / step)
+                # Idea from https://fizzbuzzer.com/implement-a-ceil-function/
+                length = (length + step - 1) // step
             if len(val) != length:
                 raise ValueError("Slice and input sequence size do not match.")
             for val_i, in_i in enumerate(range(start, stop, step)):
@@ -223,7 +225,7 @@ class DotStar:
         """Colors all pixels the given ***color***."""
         auto_write = self.auto_write
         self.auto_write = False
-        for i, _ in enumerate(self):
+        for i in range(self._n):
             self[i] = color
         if auto_write:
             self.show()
