@@ -15,7 +15,7 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 
-autodoc_mock_imports = ["digitalio", "busio"]
+# autodoc_mock_imports = ["digitalio", "busio"]
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3.4', None),
                        'CircuitPython': ('https://circuitpython.readthedocs.io/en/latest/', None)}
