@@ -4,6 +4,7 @@ import board
 import adafruit_dotstar as dotstar
 
 # One pixel connected internally on a GEMMA M0
+# pylint: disable=no-member
 dots = dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.2)
 
 # With a Dotstar Digital LEB Strip with 30 lights
