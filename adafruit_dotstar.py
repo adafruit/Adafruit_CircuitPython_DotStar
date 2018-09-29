@@ -157,7 +157,7 @@ class DotStar:
         if isinstance(value, int):
             rgb = (value >> 16, (value >> 8) & 0xff, value & 0xff)
 
-        if len(value) == 4:
+        if len(rgb) == 4:
             brightness = value[3]
             # Ignore value[3] below.
         else:
