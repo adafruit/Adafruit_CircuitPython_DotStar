@@ -59,7 +59,10 @@ class DotStar:
     :param tuple pixel_order: Set the pixel order on the strip - different
          strips implement this differently. If you send red, and it looks blue
          or green on the strip, modify this! It should be one of the values above
-
+    :param bool sk9822: True if using SK9822 LEDs which have constant current brightness
+         control. If set, global brightness will always use on-strip control instead
+         of local scaling. Using the 4th tuple value brightness control will overwrite
+         this on a per-pixel level
 
     Example for Gemma M0:
 
@@ -76,7 +79,8 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR):
+    def __init__(self, clock, data, n, *, brightness=1.0,
+                 auto_write=True, pixel_order=BGR, sk9822=False):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
@@ -91,7 +95,10 @@ class DotStar:
             self.cpin.value = False
         self._n = n
         # Supply one extra clock cycle for each two pixels in the strip.
-        self.end_header_size = n // 16
+        # plus an extra 32 bits for SK9822 compatibility
+        # uses unified APA102 / SK9822 protocol from
+        # https://cpldcpu.wordpress.com/2016/12/13/sk9822-a-clone-of-the-apa102/
+        self.end_header_size = (n // 16) + 4
         if n % 16 != 0:
             self.end_header_size += 1
         self._buf = bytearray(n * 4 + START_HEADER_SIZE + self.end_header_size)
@@ -103,10 +110,11 @@ class DotStar:
         # Mark the beginnings of each pixel.
         for i in range(START_HEADER_SIZE, self.end_header_index, 4):
             self._buf[i] = 0xff
-        # 0xff bytes at the end.
+        # 0x00 bytes at the end.
         for i in range(self.end_header_index, len(self._buf)):
-            self._buf[i] = 0xff
+            self._buf[i] = 0x00
         self._brightness = 1.0
+        self._sk9822 = sk9822
         # Set auto_write to False temporarily so brightness setter does _not_
         # call show() while in __init__.
         self.auto_write = False
@@ -218,6 +226,11 @@ class DotStar:
     @brightness.setter
     def brightness(self, brightness):
         self._brightness = min(max(brightness, 0.0), 1.0)
+        if self._sk9822:
+            brightness_byte = (32 - int(32 - brightness * 31) & 0b00011111) | LED_START
+            for i in range(0, self._n * 4, 4):
+                self._buf[i + START_HEADER_SIZE] = brightness_byte
+
         if self.auto_write:
             self.show()
 
@@ -247,7 +260,8 @@ class DotStar:
         it may be done asynchronously."""
         # Create a second output buffer if we need to compute brightness
         buf = self._buf
-        if self.brightness < 1.0:
+
+        if not self._sk9822 and self.brightness < 1.0:
             buf = bytearray(self._buf)
             # Four empty bytes to start.
             for i in range(START_HEADER_SIZE):
@@ -256,7 +270,7 @@ class DotStar:
                 buf[i] = self._buf[i] if i % 4 == 0 else int(self._buf[i] * self._brightness)
             # Four 0xff bytes at the end.
             for i in range(self.end_header_index, len(buf)):
-                buf[i] = 0xff
+                buf[i] = 0x00
 
         if self._spi:
             self._spi.write(buf)
