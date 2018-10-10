@@ -83,7 +83,8 @@ class DotStar:
             while not self._spi.try_lock():
                 pass
             self._spi.configure(baudrate=4000000)
-        except ValueError:
+
+        except (NotImplementedError, ValueError) as e:
             self.dpin = digitalio.DigitalInOut(data)
             self.cpin = digitalio.DigitalInOut(clock)
             self.dpin.direction = digitalio.Direction.OUTPUT
