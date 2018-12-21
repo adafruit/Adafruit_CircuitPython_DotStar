@@ -10,8 +10,8 @@ Adafruit CircuitPython DotStar
     :target: https://adafru.it/discord
     :alt: Discord
 
-.. image:: https://travis-ci.org/adafruit/Adafruit_CircuitPython_DotStar.svg?branch=master
-    :target: https://travis-ci.org/adafruit/Adafruit_CircuitPython_DotStar
+.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_DotStar.svg?branch=master
+    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_DotStar
     :alt: Build Status
 
 Higher level DotStar driver that presents the strip as a sequence. It is the
