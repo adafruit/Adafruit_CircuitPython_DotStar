@@ -76,13 +76,13 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR):
+    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR, baudrate=4000000):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
             while not self._spi.try_lock():
                 pass
-            self._spi.configure(baudrate=4000000)
+            self._spi.configure(baudrate=baudrate)
 
         except (NotImplementedError, ValueError):
             self.dpin = digitalio.DigitalInOut(data)
