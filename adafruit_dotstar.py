@@ -76,7 +76,8 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR, baudrate=4000000):
+    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True,
+                 pixel_order=BGR, baudrate=4000000):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
