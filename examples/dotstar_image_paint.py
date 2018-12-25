@@ -7,8 +7,8 @@
 # See dotstar_image_pov.py for a faster persistence-of-vision example.
 
 import time
-from PIL import Image
 import board
+from PIL import Image
 import adafruit_dotstar as dotstar
 
 NUMPIXELS = 30         # Number of LEDs in strip

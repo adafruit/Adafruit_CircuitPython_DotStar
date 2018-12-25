@@ -10,8 +10,8 @@
 # could break easily with future library changes, but is the only way right
 # now to do the POV as quickly as possible.
 
-from PIL import Image
 import board
+from PIL import Image
 import adafruit_dotstar as dotstar
 
 NUMPIXELS = 30         # Length of DotStar strip
