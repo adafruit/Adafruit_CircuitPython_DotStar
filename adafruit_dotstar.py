@@ -57,8 +57,13 @@ class DotStar:
     :param bool auto_write: True if the dotstars should immediately change when
         set. If False, `show` must be called explicitly.
     :param tuple pixel_order: Set the pixel order on the strip - different
-         strips implement this differently. If you send red, and it looks blue
-         or green on the strip, modify this! It should be one of the values above
+        strips implement this differently. If you send red, and it looks blue
+        or green on the strip, modify this! It should be one of the values
+        above.
+    :param int baudrate: Desired clock rate if using hardware SPI (ignored if
+        using 'soft' SPI). This is only a recommendation; the actual clock
+        rate may be slightly different depending on what the system hardware
+        can provide.
 
 
     Example for Gemma M0:
