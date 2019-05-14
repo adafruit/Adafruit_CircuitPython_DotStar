@@ -85,17 +85,23 @@ class DotStar:
                  pixel_order=BGR, baudrate=4000000):
         self._spi = None
         try:
-            self._spi = busio.SPI(clock, MOSI=data)
+            try:
+                self._spi = busio.SPI(clock, MOSI=data)
+            except (NotImplementedError, ValueError):
+                import bitbangio
+                self._spi = bitbangio.SPI(clock, MOSI=data)
+
             while not self._spi.try_lock():
                 pass
             self._spi.configure(baudrate=baudrate)
 
-        except (NotImplementedError, ValueError):
+        except (NotImplementedError, ValueError, ImportError):
             self.dpin = digitalio.DigitalInOut(data)
             self.cpin = digitalio.DigitalInOut(clock)
             self.dpin.direction = digitalio.Direction.OUTPUT
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
+
         self._n = n
         # Supply one extra clock cycle for each two pixels in the strip.
         self.end_header_size = n // 16
