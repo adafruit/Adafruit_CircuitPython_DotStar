@@ -32,7 +32,7 @@
 import busio
 import digitalio
 try:
-    from _pixelbuf import PixelBuf, RGB, RBG, GRB, GBR, BRG, BGR, LRGB, LRBG, LGRB, LGBR, LBRG, LBGR
+    from _pixelbuf import PixelBuf, RGBD as RGB, RBGD as RBG, GRBD as GRB, GBRD as GBR, BRGD as BRG, BGRD as BGR
 except ImportError:
     from pypixelbuf import PixelBuf, RGB, RBG, GRB, GBR, BRG, BGR, LRGB, LRBG, LGRB, LGBR, LBRG, LBGR
 
@@ -116,7 +116,7 @@ class DotStar:
 
         self._pb = PixelBuf(n, self._buf, byteorder=pixel_order,
             rawbuf=self._rawbuf, write_function=write_fn, offset=START_HEADER_SIZE, 
-            write_args=(), brightness=brightness, auto_write=auto_write, dotstar=True)
+            write_args=(), brightness=brightness, auto_write=auto_write)
 
         if self.auto_write:
             self.show()
