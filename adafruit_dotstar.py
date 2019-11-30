@@ -127,6 +127,14 @@ class DotStar(PixelBuf):
                                       brightness=brightness, auto_write=auto_write)
 
     def show(self):
+        """Shows the new colors on the pixels themselves if they haven't already
+        been autowritten.
+
+        The colors may or may not be showing after this method returns because
+        it may be done asynchronously.
+
+        This method is called automatically if auto_write is set to True.
+        """
         if self._spi:
             self._spi.write(self._buf)
         else:
