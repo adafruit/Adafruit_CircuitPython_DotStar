@@ -24,25 +24,33 @@
 # THE SOFTWARE.
 
 """
-`adafruit_dotstar` - DotStar strip driver (for CircuitPython 4.0+ with _pixelbuf)
+`adafruit_dotstar` - DotStar strip driver (for CircuitPython 5.0+ with _pixelbuf)
 =================================================================================
 
-* Author(s): Damien P. George, Limor Fried, Scott Shawcroft, Roy Hooper
+* Author(s): Damien P. George, Limor Fried, Scott Shawcroft & Roy Hooper
 """
 import busio
 import digitalio
 try:
-    from _pixelbuf import PixelBuf, RGBD as RGB, RBGD as RBG, GRBD as GRB, GBRD as GBR, BRGD as BRG, BGRD as BGR
+    from _pixelbuf import PixelBuf
 except ImportError:
-    from pypixelbuf import PixelBuf, RGB, RBG, GRB, GBR, BRG, BGR, LRGB, LRBG, LGRB, LGBR, LBRG, LBGR
+    from pypixelbuf import PixelBuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
 
+RBG = 'PRBG'
+RGB = 'PRGB'
+GRB = 'PGRB'
+GBR = 'PGBR'
+BRG = 'PBRG'
+BGR = 'PBGR'
+BGR = 'PBGR'
 
-class DotStar:
+
+class DotStar(PixelBuf):
     """
     A sequence of dotstars.
 
@@ -52,10 +60,13 @@ class DotStar:
     :param float brightness: Brightness of the pixels between 0.0 and 1.0
     :param bool auto_write: True if the dotstars should immediately change when
         set. If False, `show` must be called explicitly.
-    :param ByteOrder pixel_order: Set the pixel order on the strip - different
+    :param str pixel_order: Set the pixel order on the strip - different
          strips implement this differently. If you send red, and it looks blue
-         or green on the strip, modify this! It should be one of the values above
-
+         or green on the strip, modify this! It should be one of the values above.
+    :param int baudrate: Desired clock rate if using hardware SPI (ignored if
+        using 'soft' SPI). This is only a recommendation; the actual clock
+        rate may be slightly different depending on what the system hardware
+        can provide.
 
     Example for Gemma M0:
 
@@ -88,6 +99,7 @@ class DotStar:
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
         self.n = n
+
         # Supply one extra clock cycle for each two pixels in the strip.
         end_header_size = n // 16
         if n % 16 != 0:
@@ -106,20 +118,28 @@ class DotStar:
         for i in range(end_header_index, bufsize):
             self._rawbuf[i] = 0xff
         # Mark the beginnings of each pixel.
-        # for i in range(START_HEADER_SIZE, end_header_index, 4):
-            # self._rawbuf[i] = 0xff
+        for i in range(START_HEADER_SIZE, end_header_index, 4):
+            self._rawbuf[i] = 0xff
         self._buf[:] = self._rawbuf[:]
 
-        writer = self._spi.write if self._spi else self._ds_writebytes
-        def write_fn(*_):
+        super(DotStar, self).__init__(n, self._buf, byteorder=pixel_order,
+                                      rawbuf=self._rawbuf, offset=START_HEADER_SIZE,
+                                      brightness=brightness, auto_write=auto_write)
+
+    def show(self):
+        if self._spi:
             self._spi.write(self._buf)
+        else:
+            self.ds_writebytes()
 
-        self._pb = PixelBuf(n, self._buf, byteorder=pixel_order,
-            rawbuf=self._rawbuf, write_function=write_fn, offset=START_HEADER_SIZE, 
-            write_args=(), brightness=brightness, auto_write=auto_write)
-
-        if self.auto_write:
-            self.show()
+    def _ds_writebytes(self):
+        for b in self.buf:
+            for _ in range(8):
+                self.dpin.value = (b & 0x80)
+                self.cpin.value = True
+                self.cpin.value = False
+                b = b << 1
+        self.cpin.value = False
 
     def deinit(self):
         """Blank out the DotStars and release the resources."""
@@ -139,71 +159,3 @@ class DotStar:
 
     def __repr__(self):
         return "[" + ", ".join([str(x) for x in self]) + "]"
-
-    def _set_item(self, index, value):
-        if isinstance(index, slice):
-            start, stop, step = index.indices(self.n)
-            self._pb[start:stop:step] = value
-        self._pb[index] = value
-
-    def __setitem__(self, index, value):
-        """
-        value can be one of three things:
-                a (r,g,b) list/tuple
-                a (r,g,b, brightness) list/tuple (if bpp=4, pixel_order=LBGR)
-                a single, longer int that contains RGB values, like 0xFFFFFF
-            brightness, if specified should be a float 0-1
-
-        Set a pixel value. You can set per-pixel brightness here, if it's not passed it
-        will use the max value for pixel brightness value, which is a good default.
-
-        Important notes about the per-pixel brightness - it's accomplished by
-        PWMing the entire output of the LED, and that PWM is at a much
-        slower clock than the rest of the LEDs. This can cause problems in
-        Persistence of Vision Applications
-        """
-        if isinstance(index, slice):
-            start, stop, step = index.indices(self.n)
-            self._pb[start:stop:step] = value
-        self._pb[index] = value
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            start, stop, step = index.indices(self.n)
-            return self._pb[start:stop:step]
-        return self._pb[index]
-
-    @property
-    def brightness(self):
-        return self._pb.brightness
-    
-    @brightness.setter
-    def brightness(self, brightness):
-        self._pb.brightness = brightness
-
-    @property
-    def auto_write(self):
-        return self._pb.auto_write
-    
-    @auto_write.setter
-    def auto_write(self, auto_write):
-        self._pb.auto_write = auto_write
-
-    def show(self):
-        self._pb.show()
-
-    def __len__(self):
-        return self.n
-
-    def fill(self, color):
-        """Colors all pixels the given ***color***."""
-        self._pb[0:self.n] = (color, ) * self.n
-
-    def _ds_writebytes(self, buf):
-        for b in buf:
-            for _ in range(8):
-                self.dpin.value = (b & 0x80)
-                self.cpin.value = True
-                self.cpin.value = False
-                b = b << 1
-        self.cpin.value = False
