@@ -202,8 +202,8 @@ class DotStar:
     def _ds_writebytes(self, buf):
         for b in buf:
             for _ in range(8):
-                self.cpin.value = True
                 self.dpin.value = (b & 0x80)
+                self.cpin.value = True
                 self.cpin.value = False
                 b = b << 1
         self.cpin.value = False
