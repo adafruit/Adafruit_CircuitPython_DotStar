@@ -32,9 +32,9 @@
 import busio
 import digitalio
 try:
-    from _pixelbuf import PixelBuf
+    import _pixelbuf
 except ImportError:
-    from pypixelbuf import PixelBuf
+    import pypixelbuf as _pixelbuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
@@ -50,7 +50,7 @@ BGR = 'PBGR'
 BGR = 'PBGR'
 
 
-class DotStar(PixelBuf):
+class DotStar(_pixelbuf.PixelBuf):
     """
     A sequence of dotstars.
 
@@ -167,3 +167,7 @@ class DotStar(PixelBuf):
 
     def __repr__(self):
         return "[" + ", ".join([str(x) for x in self]) + "]"
+
+    def fill(self, color):
+        """Colors all pixels the given ***color***."""
+        _pixelbuf.fill(self, color)
