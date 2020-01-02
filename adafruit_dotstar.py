@@ -34,7 +34,7 @@ import digitalio
 try:
     import _pixelbuf
 except ImportError:
-    import pypixelbuf as _pixelbuf
+    import adafruit_pypixelbuf as _pixelbuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
