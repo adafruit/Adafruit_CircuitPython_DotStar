@@ -34,7 +34,8 @@ setup(
     author='Adafruit Industries',
     author_email='circuitpython@adafruit.com',
 
-    install_requires=['Adafruit-Blinka', 'adafruit-circuitpython-busdevice'],
+    install_requires=['Adafruit-Blinka', 'adafruit-circuitpython-busdevice',
+                      'adafruit-circuitpython-pypixelbuf'],
 
     # Choose your license
     license='MIT',
