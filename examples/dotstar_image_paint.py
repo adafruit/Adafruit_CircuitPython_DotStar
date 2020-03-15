@@ -11,22 +11,28 @@ import board
 from PIL import Image
 import adafruit_dotstar as dotstar
 
-NUMPIXELS = 30         # Number of LEDs in strip
-FILENAME = 'hello.png' # Image file to load
+NUMPIXELS = 30  # Number of LEDs in strip
+FILENAME = "hello.png"  # Image file to load
 
 # First two arguments in strip declaration identify the clock and data pins
 # (here we're using the hardware SPI pins). Last argument identifies the
 # color order -- older DotStar strips use GBR instead of BRG.
-DOTS = dotstar.DotStar(board.SCK, board.MOSI, NUMPIXELS, brightness=0.25,
-                       auto_write=False, pixel_order=dotstar.BGR)
+DOTS = dotstar.DotStar(
+    board.SCK,
+    board.MOSI,
+    NUMPIXELS,
+    brightness=0.25,
+    auto_write=False,
+    pixel_order=dotstar.BGR,
+)
 
 # Load image in RGB format and get dimensions:
-print('Loading...')
+print("Loading...")
 IMG = Image.open(FILENAME).convert("RGB")
 PIXELS = IMG.load()
 WIDTH = IMG.size[0]
 HEIGHT = IMG.size[1]
-print('%dx%d pixels' % IMG.size)
+print("%dx%d pixels" % IMG.size)
 
 if HEIGHT > NUMPIXELS:
     HEIGHT = NUMPIXELS
@@ -36,19 +42,20 @@ GAMMA = bytearray(256)
 for i in range(256):
     GAMMA[i] = int(pow(float(i) / 255.0, 2.7) * 255.0 + 0.5)
 
-print('Displaying...')
-while True:                      # Loop forever
+print("Displaying...")
+while True:  # Loop forever
 
-    for x in range(WIDTH):       # For each column of image...
+    for x in range(WIDTH):  # For each column of image...
         for y in range(HEIGHT):  # For each pixel in column...
-            value = PIXELS[x, y] # Read pixel in image
-            DOTS[y] = (          # Set pixel #y in strip
-                GAMMA[value[0]], # Gamma-corrected red
-                GAMMA[value[1]], # Gamma-corrected green
-                GAMMA[value[2]]) # Gamma-corrected blue
-        DOTS.show()              # Refresh LED strip
-        time.sleep(0.01)         # Pause 1/100 sec.
+            value = PIXELS[x, y]  # Read pixel in image
+            DOTS[y] = (  # Set pixel #y in strip
+                GAMMA[value[0]],  # Gamma-corrected red
+                GAMMA[value[1]],  # Gamma-corrected green
+                GAMMA[value[2]],
+            )  # Gamma-corrected blue
+        DOTS.show()  # Refresh LED strip
+        time.sleep(0.01)  # Pause 1/100 sec.
 
-    DOTS.fill(0)                 # Clear strip and pause 1/4 sec.
+    DOTS.fill(0)  # Clear strip and pause 1/4 sec.
     DOTS.show()
     time.sleep(0.25)
