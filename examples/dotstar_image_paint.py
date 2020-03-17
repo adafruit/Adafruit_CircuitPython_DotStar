@@ -51,8 +51,8 @@ while True:  # Loop forever
             DOTS[y] = (  # Set pixel #y in strip
                 GAMMA[value[0]],  # Gamma-corrected red
                 GAMMA[value[1]],  # Gamma-corrected green
-                GAMMA[value[2]],
-            )  # Gamma-corrected blue
+                GAMMA[value[2]],  # Gamma-corrected blue
+            )
         DOTS.show()  # Refresh LED strip
         time.sleep(0.01)  # Pause 1/100 sec.
 
