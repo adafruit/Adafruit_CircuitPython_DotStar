@@ -26,4 +26,4 @@ while True:
     for dot in range(n_dots):
         dots[dot] = (random_color(), random_color(), random_color())
 
-    time.sleep(.25)
+    time.sleep(0.25)

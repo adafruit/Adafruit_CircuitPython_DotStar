@@ -14,22 +14,28 @@ import board
 from PIL import Image
 import adafruit_dotstar as dotstar
 
-NUMPIXELS = 30         # Length of DotStar strip
-FILENAME = 'hello.png' # Image file to load
-ORDER = dotstar.BGR    # Change to GBR for older DotStar strips
+NUMPIXELS = 30  # Length of DotStar strip
+FILENAME = "hello.png"  # Image file to load
+ORDER = dotstar.BGR  # Change to GBR for older DotStar strips
 
 # First two arguments in strip declaration identify the clock and data pins
 # (here we're using the hardware SPI pins).
-DOTS = dotstar.DotStar(board.SCK, board.MOSI, NUMPIXELS, auto_write=False,
-                       brightness=0.25, pixel_order=ORDER)
+DOTS = dotstar.DotStar(
+    board.SCK,
+    board.MOSI,
+    NUMPIXELS,
+    auto_write=False,
+    brightness=0.25,
+    pixel_order=ORDER,
+)
 
 # Load image in RGB format and get dimensions:
-print('Loading...')
-IMG = Image.open(FILENAME).convert('RGB')
+print("Loading...")
+IMG = Image.open(FILENAME).convert("RGB")
 PIXELS = IMG.load()
 WIDTH = IMG.size[0]
 HEIGHT = IMG.size[1]
-print('%dx%d pixels' % IMG.size)
+print("%dx%d pixels" % IMG.size)
 
 if HEIGHT > NUMPIXELS:
     HEIGHT = NUMPIXELS
@@ -45,7 +51,7 @@ DOTS.brightness = 1.0
 
 # Allocate list of bytearrays, one for each column of image.
 # Each pixel REQUIRES 4 bytes (0xFF, B, G, R).
-print('Allocating...')
+print("Allocating...")
 COLUMN = [0 for x in range(WIDTH)]
 for x in range(WIDTH):
     COLUMN[x] = bytearray(HEIGHT * 4)
@@ -55,22 +61,22 @@ for x in range(WIDTH):
 # for each pixel to do any R/G/B reordering.  Because we're preparing data
 # directly for the strip, there's a reference to 'ORDER' here to rearrange
 # the color bytes as needed.
-print('Converting...')
-for x in range(WIDTH):                             # For each column of image
-    for y in range(HEIGHT):                        # For each pixel in column
-        value = PIXELS[x, y]                       # Read RGB pixel in image
-        y4 = y * 4                                 # Position in raw buffer
-        COLUMN[x][y4] = 0xFF                       # Pixel start marker
-        y4 += 1                                    # Pixel color data start
-        COLUMN[x][y4 + ORDER[0]] = GAMMA[value[0]] # Gamma-corrected R
-        COLUMN[x][y4 + ORDER[1]] = GAMMA[value[1]] # Gamma-corrected G
-        COLUMN[x][y4 + ORDER[2]] = GAMMA[value[2]] # Gamma-corrected B
+print("Converting...")
+for x in range(WIDTH):  # For each column of image
+    for y in range(HEIGHT):  # For each pixel in column
+        value = PIXELS[x, y]  # Read RGB pixel in image
+        y4 = y * 4  # Position in raw buffer
+        COLUMN[x][y4] = 0xFF  # Pixel start marker
+        y4 += 1  # Pixel color data start
+        COLUMN[x][y4 + ORDER[0]] = GAMMA[value[0]]  # Gamma-corrected R
+        COLUMN[x][y4 + ORDER[1]] = GAMMA[value[1]]  # Gamma-corrected G
+        COLUMN[x][y4 + ORDER[2]] = GAMMA[value[2]]  # Gamma-corrected B
 
-print('Displaying...')
-while True:                                 # Loop forever
+print("Displaying...")
+while True:  # Loop forever
 
     # pylint: disable=protected-access
     # (Really shouldn't access _buf directly, but needed for fastest POV)
-    for x in range(WIDTH):                  # For each column of image...
-        DOTS._buf[4:4+HEIGHT*4] = COLUMN[x] # Copy column to DotStar buffer
-        DOTS.show()                         # Send data to strip
+    for x in range(WIDTH):  # For each column of image...
+        DOTS._buf[4 : 4 + HEIGHT * 4] = COLUMN[x]  # Copy column to DotStar buffer
+        DOTS.show()  # Send data to strip
