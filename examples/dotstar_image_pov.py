@@ -25,7 +25,7 @@ DOTS = dotstar.DotStar(
     board.MOSI,
     NUMPIXELS,
     auto_write=False,
-    brightness=0.25,
+    brightness=1.0,
     pixel_order=ORDER,
 )
 
@@ -42,41 +42,29 @@ if HEIGHT > NUMPIXELS:
 
 # Calculate gamma correction table, makes mid-range colors look 'right':
 GAMMA = bytearray(256)
+brightness = 0.25
 for i in range(256):
-    # Notice we access DOTS.brightness directly here...the gamma table will
-    # handle any brightness-scaling, so we can set the object brightness back
-    # to max and it won't need to perform brightness scaling on every write.
-    GAMMA[i] = int(pow(float(i) / 255.0, 2.7) * DOTS.brightness * 255.0 + 0.5)
-DOTS.brightness = 1.0
+    GAMMA[i] = int(pow(float(i) / 255.0, 2.7) * brightness * 255.0 + 0.5)
 
-# Allocate list of bytearrays, one for each column of image.
-# Each pixel REQUIRES 4 bytes (0xFF, B, G, R).
+# Allocate list of lists, one for each column of image.
 print("Allocating...")
 COLUMN = [0 for x in range(WIDTH)]
 for x in range(WIDTH):
-    COLUMN[x] = bytearray(HEIGHT * 4)
+    COLUMN[x] = [[0, 0, 0, 0] for _ in range(HEIGHT)]
 
-# Convert entire RGB image into column-wise bytearray list.
-# The dotstar_image_paint.py example uses the library's 'setter' operation
-# for each pixel to do any R/G/B reordering.  Because we're preparing data
-# directly for the strip, there's a reference to 'ORDER' here to rearrange
-# the color bytes as needed.
+# Convert entire RGB image into columnxrow 2D list.
 print("Converting...")
 for x in range(WIDTH):  # For each column of image
     for y in range(HEIGHT):  # For each pixel in column
         value = PIXELS[x, y]  # Read RGB pixel in image
-        y4 = y * 4  # Position in raw buffer
-        COLUMN[x][y4] = 0xFF  # Pixel start marker
-        y4 += 1  # Pixel color data start
-        COLUMN[x][y4 + ORDER[0]] = GAMMA[value[0]]  # Gamma-corrected R
-        COLUMN[x][y4 + ORDER[1]] = GAMMA[value[1]]  # Gamma-corrected G
-        COLUMN[x][y4 + ORDER[2]] = GAMMA[value[2]]  # Gamma-corrected B
+        COLUMN[x][y][0] = GAMMA[value[0]]  # Gamma-corrected R
+        COLUMN[x][y][1] = GAMMA[value[1]]  # Gamma-corrected G
+        COLUMN[x][y][2] = GAMMA[value[2]]  # Gamma-corrected B
+        COLUMN[x][y][3] = 1.0  # Brightness
 
 print("Displaying...")
 while True:  # Loop forever
 
-    # pylint: disable=protected-access
-    # (Really shouldn't access _buf directly, but needed for fastest POV)
     for x in range(WIDTH):  # For each column of image...
-        DOTS._buf[4 : 4 + HEIGHT * 4] = COLUMN[x]  # Copy column to DotStar buffer
+        DOTS[0 : DOTS.n] = COLUMN[x]  # Copy column to DotStar buffer
         DOTS.show()  # Send data to strip

@@ -26,7 +26,7 @@ It should be a float. For example, (0xFF,0,0, 1.0) is the brightest red possible
 
 .. note:: The int hex API represents the brightness of the white pixel when
   present by setting the RGB channels to identical values. For example, full
-  white is 0xffffff but is actually (0xff, 0xff, 0xff) in the tuple syntax. 
+  white is 0xffffff but is actually (0xff, 0xff, 0xff) in the tuple syntax.
 
 Dependencies
 =============
@@ -77,50 +77,6 @@ This example demonstrates the library with the single built-in DotStar on the
 
     pixels = adafruit_dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1)
     pixels[0] = (10, 0, 0)
-
-
-This example demonstrates the library with the DotStar Feather Wing and bounces Blinka.
-
-`Feather M4 Express <https://www.adafruit.com/product/3857>`_ and
-`DotStar FeatherWing <https://www.adafruit.com/product/3449>`_.
-
-.. code-block:: python
-
-    import board
-    import adafruit_dotstar
-    import time
-
-
-    import adafruit_dotstar
-    dotstar = adafruit_dotstar.DotStar(board.D13, board.D11, 72,
-                                       pixel_order=adafruit_dotstar.BGR,
-                                       brightness=0.3, auto_write=False)
-
-    blinka = (
-        (0, 0x0f0716, 0x504069, 0x482e63, 0, 0),
-        (0, 0x3d1446, 0x502b74, 0x622f8c, 0, 0),
-        (0, 0x2e021b, 0x2e021b, 0x2e021b, 0, 0),
-        (0, 0, 0x2e021b, 0x2e021b, 0, 0),
-        (0, 0x591755, 0x912892, 0x3f205c, 0x282828, 0x301844),
-        (0x65206b, 0x932281, 0x6e318f, 0x6d2b7e, 0x7e2686, 0x8c2c8f),
-        (0x7c2d8c, 0xa21c81, 0x6b308e, 0x74257b, 0x7b2482, 0x742f8d),
-        (0x23051a, 0x5c0f45, 0x81227b, 0x551a5b, 0x691b5d, 0x4d0c39),
-    )
-    offset = 0
-    direction = 1
-    while True:
-        dotstar.fill(0)
-        for y, row in enumerate(blinka):
-            for x, value in enumerate(row):
-                n = x * 12 + (y + offset)
-                dotstar[n] = row[x]
-        dotstar.show()
-        time.sleep(0.1)
-        offset += direction
-        if offset > 4 or offset < 0:
-            direction = -direction
-            offset += direction
-
 
 Contributing
 ============

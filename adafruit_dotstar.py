@@ -29,25 +29,32 @@
 
 * Author(s): Damien P. George, Limor Fried, Scott Shawcroft & Roy Hooper
 """
+
+# pylint: disable=ungrouped-imports
+import sys
 import busio
 import digitalio
-try:
-    import _pixelbuf
-except ImportError:
+
+if sys.implementation.version[0] < 5:
     import adafruit_pypixelbuf as _pixelbuf
+else:
+    try:
+        import _pixelbuf
+    except ImportError:
+        import adafruit_pypixelbuf as _pixelbuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
 
-RBG = 'PRBG'
-RGB = 'PRGB'
-GRB = 'PGRB'
-GBR = 'PGBR'
-BRG = 'PBRG'
-BGR = 'PBGR'
-BGR = 'PBGR'
+RBG = "PRBG"
+RGB = "PRGB"
+GRB = "PGRB"
+GBR = "PGBR"
+BRG = "PBRG"
+BGR = "PBGR"
+BGR = "PBGR"
 
 
 class DotStar(_pixelbuf.PixelBuf):
@@ -81,6 +88,22 @@ class DotStar(_pixelbuf.PixelBuf):
         with adafruit_dotstar.DotStar(APA102_SCK, APA102_MOSI, 1) as pixels:
             pixels[0] = RED
             time.sleep(2)
+
+    .. py:method:: DotStar.show()
+
+        Shows the new colors on the dotstars themselves if they haven't already
+        been autowritten.
+
+        The colors may or may not be showing after this function returns because
+        it may be done asynchronously.
+
+    .. py:method:: DotStar.fill(color)
+
+        Colors all dotstars the given ***color***.
+
+    .. py:attribute:: brightness
+
+        Overall brightness of the dotstar (0 to 1.0)
     """
 
     def __init__(
@@ -107,56 +130,25 @@ class DotStar(_pixelbuf.PixelBuf):
             self.dpin.direction = digitalio.Direction.OUTPUT
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
-        self.n = n
 
         # Supply one extra clock cycle for each two pixels in the strip.
-        end_header_size = n // 16
+        trailer_size = n // 16
         if n % 16 != 0:
-            end_header_size += 1
-        bufsize = 4 * n + START_HEADER_SIZE + end_header_size
-        end_header_index = bufsize - end_header_size
-        self.pixel_order = pixel_order
+            trailer_size += 1
 
-        self._buf = bytearray(bufsize)
-        self._rawbuf = bytearray(bufsize)
+        # Four empty bytes for the header.
+        header = bytearray(START_HEADER_SIZE)
+        # 0xff bytes for the trailer.
+        trailer = bytearray(b"\xff") * trailer_size
 
-        # Four empty bytes to start.
-        for i in range(START_HEADER_SIZE):
-            self._rawbuf[i] = 0x00
-        # 0xff bytes at the end.
-        for i in range(end_header_index, bufsize):
-            self._rawbuf[i] = 0xff
-        # Mark the beginnings of each pixel.
-        for i in range(START_HEADER_SIZE, end_header_index, 4):
-            self._rawbuf[i] = 0xff
-        self._buf[:] = self._rawbuf[:]
-
-        super(DotStar, self).__init__(n, self._buf, byteorder=pixel_order,
-                                      rawbuf=self._rawbuf, offset=START_HEADER_SIZE,
-                                      brightness=brightness, auto_write=auto_write)
-
-    def show(self):
-        """Shows the new colors on the pixels themselves if they haven't already
-        been autowritten.
-
-        The colors may or may not be showing after this method returns because
-        it may be done asynchronously.
-
-        This method is called automatically if auto_write is set to True.
-        """
-        if self._spi:
-            self._spi.write(self._buf)
-        else:
-            self.ds_writebytes()
-
-    def _ds_writebytes(self):
-        for b in self.buf:
-            for _ in range(8):
-                self.dpin.value = (b & 0x80)
-                self.cpin.value = True
-                self.cpin.value = False
-                b = b << 1
-        self.cpin.value = False
+        super().__init__(
+            n,
+            byteorder=pixel_order,
+            brightness=brightness,
+            auto_write=auto_write,
+            header=header,
+            trailer=trailer,
+        )
 
     def deinit(self):
         """Blank out the DotStars and release the resources."""
@@ -177,6 +169,24 @@ class DotStar(_pixelbuf.PixelBuf):
     def __repr__(self):
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
-    def fill(self, color):
-        """Colors all pixels the given ***color***."""
-        _pixelbuf.fill(self, color)
+    @property
+    def n(self):
+        """
+        The number of dotstars in the chain (read-only)
+        """
+        return len(self)
+
+    def _transmit(self, buffer):
+        if self._spi:
+            self._spi.write(buffer)
+        else:
+            self._ds_writebytes(buffer)
+
+    def _ds_writebytes(self, buffer):
+        for b in buffer:
+            for _ in range(8):
+                self.dpin.value = b & 0x80
+                self.cpin.value = True
+                self.cpin.value = False
+                b = b << 1
+        self.cpin.value = False
