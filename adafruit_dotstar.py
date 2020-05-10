@@ -96,6 +96,23 @@ class DotStar(_pixelbuf.PixelBuf):
         with adafruit_dotstar.DotStar(APA102_SCK, APA102_MOSI, 1) as pixels:
             pixels[0] = RED
             time.sleep(2)
+
+
+    .. py:method:: DotStar.show()
+
+        Shows the new colors on the pixels themselves if they haven't already
+        been autowritten.
+
+        The colors may or may not be showing after this function returns because
+        it may be done asynchronously.
+
+    .. py:method:: DotStar.fill(color)
+
+        Colors all pixels the given ***color***.
+
+    .. py:attribute:: brightness
+
+        Overall brightness of the pixel (0 to 1.0)
     """
 
     def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR,
