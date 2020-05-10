@@ -30,9 +30,9 @@
 """
 
 # pylint: disable=ungrouped-imports
+import sys
 import busio
 import digitalio
-import sys
 
 if sys.implementation.version[0] < 5:
     import adafruit_pypixelbuf as _pixelbuf
@@ -123,7 +123,7 @@ class DotStar(_pixelbuf.PixelBuf):
         trailer = bytearray(end_header_size)
 
         # 0xff bytes at the end.
-        for i in range(len(trailer)):
+        for i, _ in enumerate(trailer):
             trailer[i] = 0xFF
 
         super().__init__(n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write,
