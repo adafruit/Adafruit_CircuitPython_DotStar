@@ -26,10 +26,21 @@
 `adafruit_dotstar` - DotStar strip driver
 ====================================================
 
-* Author(s): Damien P. George, Limor Fried & Scott Shawcroft
+* Author(s): Damien P. George, Limor Fried, Scott Shawcroft & Roy Hooper
 """
+
+# pylint: disable=ungrouped-imports
 import busio
 import digitalio
+import sys
+
+if sys.implementation.version[0] < 5:
+    import adafruit_pypixelbuf as _pixelbuf
+else:
+    try:
+        import _pixelbuf
+    except ImportError:
+        import adafruit_pypixelbuf as _pixelbuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
@@ -38,15 +49,21 @@ START_HEADER_SIZE = 4
 LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 # Pixel color order constants
-RGB = (0, 1, 2)
-RBG = (0, 2, 1)
-GRB = (1, 0, 2)
-GBR = (1, 2, 0)
-BRG = (2, 0, 1)
-BGR = (2, 1, 0)
+RGB = "PRGB"
+"""Red Green Blue"""
+RBG = "PRBG"
+"""Red Blue Green"""
+GRB = "PGRB"
+"""Green Red Blue"""
+GBR = "PGBR"
+"""Green Blue Red"""
+BRG = "PBRG"
+"""Blue Red Green"""
+BGR = "PBGR"
+"""Blue Green Red"""
 
 
-class DotStar:
+class DotStar(_pixelbuf.PixelBuf):
     """
     A sequence of dotstars.
 
@@ -56,7 +73,7 @@ class DotStar:
     :param float brightness: Brightness of the pixels between 0.0 and 1.0
     :param bool auto_write: True if the dotstars should immediately change when
         set. If False, `show` must be called explicitly.
-    :param tuple pixel_order: Set the pixel order on the strip - different
+    :param string pixel_order: Set the pixel order on the strip - different
         strips implement this differently. If you send red, and it looks blue
         or green on the strip, modify this! It should be one of the values
         above.
@@ -81,17 +98,8 @@ class DotStar:
             time.sleep(2)
     """
 
-    def __init__(
-        self,
-        clock,
-        data,
-        n,
-        *,
-        brightness=1.0,
-        auto_write=True,
-        pixel_order=BGR,
-        baudrate=4000000
-    ):
+    def __init__(self, clock, data, n, *, brightness=1.0, auto_write=True, pixel_order=BGR,
+                 baudrate=4000000):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
@@ -105,36 +113,25 @@ class DotStar:
             self.dpin.direction = digitalio.Direction.OUTPUT
             self.cpin.direction = digitalio.Direction.OUTPUT
             self.cpin.value = False
-        self._n = n
+
         # Supply one extra clock cycle for each two pixels in the strip.
-        self.end_header_size = n // 16
+        end_header_size = n // 16
         if n % 16 != 0:
-            self.end_header_size += 1
-        self._buf = bytearray(n * 4 + START_HEADER_SIZE + self.end_header_size)
-        self.end_header_index = len(self._buf) - self.end_header_size
-        self.pixel_order = pixel_order
-        # Four empty bytes to start.
-        for i in range(START_HEADER_SIZE):
-            self._buf[i] = 0x00
-        # Mark the beginnings of each pixel.
-        for i in range(START_HEADER_SIZE, self.end_header_index, 4):
-            self._buf[i] = 0xFF
+            end_header_size += 1
+
+        header = bytearray(START_HEADER_SIZE)
+        trailer = bytearray(end_header_size)
+
         # 0xff bytes at the end.
-        for i in range(self.end_header_index, len(self._buf)):
-            self._buf[i] = 0xFF
-        self._brightness = 1.0
-        # Set auto_write to False temporarily so brightness setter does _not_
-        # call show() while in __init__.
-        self.auto_write = False
-        self.brightness = brightness
-        self.auto_write = auto_write
+        for i in range(len(trailer)):
+            trailer[i] = 0xFF
+
+        super().__init__(n, brightness=brightness, byteorder=pixel_order, auto_write=auto_write,
+                         header=header, trailer=trailer)
 
     def deinit(self):
         """Blank out the DotStars and release the resources."""
-        self.auto_write = False
-        for i in range(START_HEADER_SIZE, self.end_header_index):
-            if i % 4 != 0:
-                self._buf[i] = 0
+        self.fill(0)
         self.show()
         if self._spi:
             self._spi.deinit()
@@ -151,104 +148,12 @@ class DotStar:
     def __repr__(self):
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
-    def _set_item(self, index, value):
-        """
-        value can be one of three things:
-                a (r,g,b) list/tuple
-                a (r,g,b, brightness) list/tuple
-                a single, longer int that contains RGB values, like 0xFFFFFF
-            brightness, if specified should be a float 0-1
-
-        Set a pixel value. You can set per-pixel brightness here, if it's not passed it
-        will use the max value for pixel brightness value, which is a good default.
-
-        Important notes about the per-pixel brightness - it's accomplished by
-        PWMing the entire output of the LED, and that PWM is at a much
-        slower clock than the rest of the LEDs. This can cause problems in
-        Persistence of Vision Applications
-        """
-
-        offset = index * 4 + START_HEADER_SIZE
-        rgb = value
-        if isinstance(value, int):
-            rgb = (value >> 16, (value >> 8) & 0xFF, value & 0xFF)
-
-        if len(rgb) == 4:
-            brightness = value[3]
-            # Ignore value[3] below.
-        else:
-            brightness = 1
-
-        # LED startframe is three "1" bits, followed by 5 brightness bits
-        # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
-        # vary based on hardware
-        # same as math.ceil(brightness * 31) & 0b00011111
-        # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-        brightness_byte = 32 - int(32 - brightness * 31) & 0b00011111
-        self._buf[offset] = brightness_byte | LED_START
-        self._buf[offset + 1] = rgb[self.pixel_order[0]]
-        self._buf[offset + 2] = rgb[self.pixel_order[1]]
-        self._buf[offset + 3] = rgb[self.pixel_order[2]]
-
-    def __setitem__(self, index, val):
-        if isinstance(index, slice):
-            start, stop, step = index.indices(self._n)
-            length = stop - start
-            if step != 0:
-                # same as math.ceil(length / step)
-                # Idea from https://fizzbuzzer.com/implement-a-ceil-function/
-                length = (length + step - 1) // step
-            if len(val) != length:
-                raise ValueError("Slice and input sequence size do not match.")
-            for val_i, in_i in enumerate(range(start, stop, step)):
-                self._set_item(in_i, val[val_i])
-        else:
-            self._set_item(index, val)
-
-        if self.auto_write:
-            self.show()
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            out = []
-            for in_i in range(*index.indices(self._n)):
-                out.append(
-                    tuple(
-                        self._buf[in_i * 4 + (3 - i) + START_HEADER_SIZE]
-                        for i in range(3)
-                    )
-                )
-            return out
-        if index < 0:
-            index += len(self)
-        if index >= self._n or index < 0:
-            raise IndexError
-        offset = index * 4
-        return tuple(self._buf[offset + (3 - i) + START_HEADER_SIZE] for i in range(3))
-
-    def __len__(self):
-        return self._n
-
     @property
-    def brightness(self):
-        """Overall brightness of the pixel"""
-        return self._brightness
-
-    @brightness.setter
-    def brightness(self, brightness):
-        self._brightness = min(max(brightness, 0.0), 1.0)
-        if self.auto_write:
-            self.show()
-
-    def fill(self, color):
-        """Colors all pixels the given ***color***."""
-        auto_write = self.auto_write
-        self.auto_write = False
-        for i in range(self._n):
-            self[i] = color
-        if auto_write:
-            self.show()
-        self.auto_write = auto_write
+    def n(self):
+        """
+        The number of dotstars in the chain (read-only)
+        """
+        return len(self)
 
     def _ds_writebytes(self, buf):
         for b in buf:
@@ -258,29 +163,9 @@ class DotStar:
                 self.cpin.value = False
                 b = b << 1
 
-    def show(self):
-        """Shows the new colors on the pixels themselves if they haven't already
-        been autowritten.
-
-        The colors may or may not be showing after this function returns because
-        it may be done asynchronously."""
-        # Create a second output buffer if we need to compute brightness
-        buf = self._buf
-        if self.brightness < 1.0:
-            buf = bytearray(self._buf)
-            # Four empty bytes to start.
-            for i in range(START_HEADER_SIZE):
-                buf[i] = 0x00
-            for i in range(START_HEADER_SIZE, self.end_header_index):
-                buf[i] = (
-                    self._buf[i] if i % 4 == 0 else int(self._buf[i] * self._brightness)
-                )
-            # Four 0xff bytes at the end.
-            for i in range(self.end_header_index, len(buf)):
-                buf[i] = 0xFF
-
+    def _transmit(self, buffer):
         if self._spi:
-            self._spi.write(buf)
+            self._spi.write(buffer)
         else:
-            self._ds_writebytes(buf)
+            self._ds_writebytes(buffer)
             self.cpin.value = False
