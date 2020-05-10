@@ -43,9 +43,6 @@ jobs:
         pip install pylint black==19.10b0 Sphinx sphinx-rtd-theme
     - name: Library version
       run: git describe --dirty --always --tags
-    - name: Check formatting
-      run: |
-        black --check --target-version=py35 .
     - name: PyLint
       run: |
         pylint $( find . -path './adafruit*.py' )
@@ -55,3 +52,6 @@ jobs:
     - name: Build docs
       working-directory: docs
       run: sphinx-build -E -W -b html . _build/html
+    - name: Check formatting
+      run: |
+        black --check --target-version=py35 .
