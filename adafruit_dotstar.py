@@ -46,7 +46,6 @@ __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
-LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
 # Pixel color order constants
 RGB = "PRGB"
