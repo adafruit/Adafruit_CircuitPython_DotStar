@@ -48,13 +48,19 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
 START_HEADER_SIZE = 4
 
+# Pixel color order constants
 RBG = "PRBG"
+"""Red Blue Green"""
 RGB = "PRGB"
+"""Red Green Blue"""
 GRB = "PGRB"
+"""Green Red Blue"""
 GBR = "PGBR"
+"""Green Blue Red"""
 BRG = "PBRG"
+"""Blue Red Green"""
 BGR = "PBGR"
-BGR = "PBGR"
+"""Blue Green Red"""
 
 
 class DotStar(_pixelbuf.PixelBuf):
@@ -103,7 +109,7 @@ class DotStar(_pixelbuf.PixelBuf):
 
     .. py:attribute:: brightness
 
-        Overall brightness of the dotstar (0 to 1.0)
+        Overall brightness of all dotstars (0 to 1.0)
     """
 
     def __init__(
