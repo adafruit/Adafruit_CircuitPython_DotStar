@@ -72,7 +72,7 @@ class DotStar(_pixelbuf.PixelBuf):
     :param float brightness: Brightness of the pixels between 0.0 and 1.0
     :param bool auto_write: True if the dotstars should immediately change when
         set. If False, `show` must be called explicitly.
-    :param string pixel_order: Set the pixel order on the strip - different
+    :param str pixel_order: Set the pixel order on the strip - different
         strips implement this differently. If you send red, and it looks blue
         or green on the strip, modify this! It should be one of the values
         above.
