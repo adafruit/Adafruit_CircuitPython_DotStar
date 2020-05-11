@@ -9,6 +9,7 @@
 # than through function calls or setters/getters...this is poor form as it
 # could break easily with future library changes, but is the only way right
 # now to do the POV as quickly as possible.
+# May require installing separate libraries.
 
 import board
 from PIL import Image
