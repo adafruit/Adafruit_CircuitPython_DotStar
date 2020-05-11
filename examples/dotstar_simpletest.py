@@ -14,7 +14,7 @@ dots = dotstar.DotStar(board.APA102_SCK, board.APA102_MOSI, 1, brightness=0.2)
 
 
 # HELPERS
-# a random color 0 -> 224
+# a random color 0 -> 192
 def random_color():
     return random.randrange(0, 7) * 32
 

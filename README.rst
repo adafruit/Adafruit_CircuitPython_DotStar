@@ -26,7 +26,7 @@ It should be a float. For example, (0xFF,0,0, 1.0) is the brightest red possible
 
 .. note:: The int hex API represents the brightness of the white pixel when
   present by setting the RGB channels to identical values. For example, full
-  white is 0xffffff but is actually (0xff, 0xff, 0xff) in the tuple syntax. 
+  white is 0xffffff but is actually (0xff, 0xff, 0xff) in the tuple syntax.
 
 Dependencies
 =============
