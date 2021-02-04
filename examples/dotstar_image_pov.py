@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 #!/usr/bin/python3
 
 # Persistence-of-vision (POV) example for Adafruit DotStar RGB LED strip.
