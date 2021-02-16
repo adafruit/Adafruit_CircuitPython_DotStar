@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 #!/usr/bin/python3
 
 # Light-painting example for Adafruit DotStar RGB LED strip.
