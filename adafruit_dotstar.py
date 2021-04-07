@@ -9,21 +9,17 @@
 `adafruit_dotstar` - DotStar strip driver (for CircuitPython 5.0+ with _pixelbuf)
 =================================================================================
 
-* Author(s): Damien P. George, Limor Fried, Scott Shawcroft & Roy Hooper
+* Author(s): Damien P. George, Limor Fried, Scott Shawcroft & Rose Hooper
 """
 
 # pylint: disable=ungrouped-imports
-import sys
 import busio
 import digitalio
 
-if sys.implementation.version[0] < 5:
+try:
+    import _pixelbuf
+except ImportError:
     import adafruit_pypixelbuf as _pixelbuf
-else:
-    try:
-        import _pixelbuf
-    except ImportError:
-        import adafruit_pypixelbuf as _pixelbuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
