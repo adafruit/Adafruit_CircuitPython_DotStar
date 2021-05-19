@@ -37,8 +37,7 @@ WIDTH = IMG.size[0]
 HEIGHT = IMG.size[1]
 print("%dx%d pixels" % IMG.size)
 
-if HEIGHT > NUMPIXELS:
-    HEIGHT = NUMPIXELS
+HEIGHT = min(HEIGHT, NUMPIXELS)
 
 # Calculate gamma correction table, makes mid-range colors look 'right':
 GAMMA = bytearray(256)
