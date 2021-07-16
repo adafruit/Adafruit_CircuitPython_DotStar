@@ -17,9 +17,12 @@ import busio
 import digitalio
 
 try:
-    import _pixelbuf
+    import adafruit_pixelbuf
 except ImportError:
-    import adafruit_pypixelbuf as _pixelbuf
+    try:
+        import _pixelbuf as adafruit_pixelbuf
+    except ImportError:
+        import adafruit_pypixelbuf as adafruit_pixelbuf
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
@@ -41,7 +44,7 @@ BGR = "PBGR"
 """Blue Green Red"""
 
 
-class DotStar(_pixelbuf.PixelBuf):
+class DotStar(adafruit_pixelbuf.PixelBuf):
     """
     A sequence of dotstars.
 
