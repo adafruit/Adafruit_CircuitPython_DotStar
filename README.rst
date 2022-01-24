@@ -3,7 +3,7 @@ Adafruit CircuitPython DotStar
 ==============================
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-dotstar/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/dotstar/en/latest/
+    :target: https://docs.circuitpython.org/projects/dotstar/en/latest/
     :alt: Documentation Status
 
 .. image :: https://img.shields.io/discord/327254708534116352.svg
@@ -81,7 +81,7 @@ This example demonstrates the library with the single built-in DotStar on the
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/dotstar/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/dotstar/en/latest/>`_.
 
 Contributing
 ============
