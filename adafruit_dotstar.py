@@ -24,6 +24,14 @@ except ImportError:
     except ImportError:
         import adafruit_pypixelbuf as adafruit_pixelbuf
 
+try:
+    from typing import Optional, Type
+    from types import TracebackType
+    from circuitpython_typing import ReadableBuffer
+    from microcontroller import Pin
+except ImportError:
+    pass
+
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_DotStar.git"
 
@@ -95,15 +103,15 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
 
     def __init__(
         self,
-        clock,
-        data,
-        n,
+        clock: Pin,
+        data: Pin,
+        n: int,
         *,
-        brightness=1.0,
-        auto_write=True,
-        pixel_order=BGR,
-        baudrate=4000000
-    ):
+        brightness: float = 1.0,
+        auto_write: bool = True,
+        pixel_order: str = BGR,
+        baudrate: int = 4000000
+    ) -> None:
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
@@ -137,7 +145,7 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
             trailer=trailer,
         )
 
-    def deinit(self):
+    def deinit(self) -> None:
         """Blank out the DotStars and release the resources."""
         self.fill(0)
         self.show()
@@ -147,29 +155,34 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
             self.dpin.deinit()
             self.cpin.deinit()
 
-    def __enter__(self):
+    def __enter__(self) -> "DotStar":
         return self
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(
+        self,
+        exception_type: Optional[Type[type]],
+        exception_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         self.deinit()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "[" + ", ".join([str(x) for x in self]) + "]"
 
     @property
-    def n(self):
+    def n(self) -> int:
         """
         The number of dotstars in the chain (read-only)
         """
         return len(self)
 
-    def _transmit(self, buffer):
+    def _transmit(self, buffer: ReadableBuffer) -> None:
         if self._spi:
             self._spi.write(buffer)
         else:
             self._ds_writebytes(buffer)
 
-    def _ds_writebytes(self, buffer):
+    def _ds_writebytes(self, buffer: ReadableBuffer) -> None:
         for b in buffer:
             for _ in range(8):
                 self.dpin.value = b & 0x80
