@@ -16,13 +16,7 @@
 import busio
 import digitalio
 
-try:
-    import adafruit_pixelbuf
-except ImportError:
-    try:
-        import _pixelbuf as adafruit_pixelbuf
-    except ImportError:
-        import adafruit_pypixelbuf as adafruit_pixelbuf
+import adafruit_pixelbuf
 
 try:
     from typing import Optional, Type
