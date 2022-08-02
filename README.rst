@@ -14,6 +14,10 @@ Adafruit CircuitPython DotStar
     :target: https://github.com/adafruit/Adafruit_CircuitPython_DotStar/actions/
     :alt: Build Status
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+    :alt: Code Style: Black
+
 Higher level DotStar driver that presents the strip as a sequence. It is the
 same api as the `NeoPixel library <https://github.com/adafruit/Adafruit_CircuitPython_NeoPixel>`_.
 
