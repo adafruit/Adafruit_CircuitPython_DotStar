@@ -127,8 +127,10 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
 
         # Four empty bytes for the header.
         header = bytearray(START_HEADER_SIZE)
-        # 0xff bytes for the trailer.
-        trailer = bytearray(b"\xff") * trailer_size
+        # Zero bits, not ones, for the trailer, to avoid lighting up
+        # downstream pixels, if there are more physical pixels than
+        # the length of this object.
+        trailer = bytearray(trailer_size)
 
         super().__init__(
             n,
