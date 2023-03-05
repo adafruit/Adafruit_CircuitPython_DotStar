@@ -4,5 +4,4 @@
 
 Adafruit-Blinka>=7.0.0
 adafruit-circuitpython-typing
-adafruit-circuitpython-busdevice
 adafruit-circuitpython-pixelbuf
