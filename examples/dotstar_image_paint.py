@@ -46,7 +46,6 @@ for i in range(256):
 
 print("Displaying...")
 while True:  # Loop forever
-
     for x in range(WIDTH):  # For each column of image...
         for y in range(HEIGHT):  # For each pixel in column...
             value = PIXELS[x, y]  # Read pixel in image
