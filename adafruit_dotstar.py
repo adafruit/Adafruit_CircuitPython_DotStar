@@ -146,6 +146,7 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
         self.fill(0)
         self.show()
         if self._spi:
+            self._spi.unlock()
             self._spi.deinit()
         else:
             self.dpin.deinit()
