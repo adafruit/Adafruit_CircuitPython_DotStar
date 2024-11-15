@@ -3,6 +3,9 @@
 
 #!/usr/bin/python3
 
+# This example runs on SBC devices like Raspberry Pi.
+# It cannot run on  microcontrollers.
+
 # Light-painting example for Adafruit DotStar RGB LED strip.
 # Loads image, displays column-at-a-time on LEDs at a reasonable
 # speed for long exposure photography.
