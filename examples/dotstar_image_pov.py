@@ -3,6 +3,9 @@
 
 #!/usr/bin/python3
 
+# This example runs on SBC devices like Raspberry Pi.
+# It cannot run on  microcontrollers.
+
 # Persistence-of-vision (POV) example for Adafruit DotStar RGB LED strip.
 # Loads image, displays column-at-a-time on LEDs at very high speed,
 # suitable for naked-eye illusions.
