@@ -12,15 +12,14 @@
 * Author(s): Damien P. George, Limor Fried, Scott Shawcroft & Rose Hooper
 """
 
-# pylint: disable=ungrouped-imports
+import adafruit_pixelbuf
 import busio
 import digitalio
 
-import adafruit_pixelbuf
-
 try:
-    from typing import Optional, Type
     from types import TracebackType
+    from typing import Optional, Type
+
     from circuitpython_typing import ReadableBuffer
     from microcontroller import Pin
 except ImportError:
@@ -104,7 +103,7 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
         brightness: float = 1.0,
         auto_write: bool = True,
         pixel_order: str = BGR,
-        baudrate: int = 4000000
+        baudrate: int = 4000000,
     ) -> None:
         self._spi = None
         try:
@@ -180,10 +179,10 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
             self._ds_writebytes(buffer)
 
     def _ds_writebytes(self, buffer: ReadableBuffer) -> None:
-        for b in buffer:
+        for b in buffer:  # noqa: PLW2901
             for _ in range(8):
                 self.dpin.value = b & 0x80
                 self.cpin.value = True
                 self.cpin.value = False
-                b = b << 1
+                b = b << 1  # noqa: PLW2901
         self.cpin.value = False
