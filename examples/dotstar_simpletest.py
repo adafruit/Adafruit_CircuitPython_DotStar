@@ -1,9 +1,11 @@
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
-import time
 import random
+import time
+
 import board
+
 import adafruit_dotstar as dotstar
 
 # On-board DotStar for boards including Gemma, Trinket, and ItsyBitsy
