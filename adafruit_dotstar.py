@@ -82,9 +82,9 @@ class DotStar:
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
-            while not self._spi.try_lock():
-                pass
+            self._spi.try_lock()
             self._spi.configure(baudrate=4000000)
+            self._spi.unlock()
         except ValueError:
             self.dpin = digitalio.DigitalInOut(data)
             self.cpin = digitalio.DigitalInOut(clock)
@@ -257,7 +257,9 @@ class DotStar:
                 buf[i] = 0xff
 
         if self._spi:
+            self._spi.try_lock()
             self._spi.write(buf)
+            self._spi.unlock()
         else:
             self._ds_writebytes(buf)
             self.cpin.value = False
