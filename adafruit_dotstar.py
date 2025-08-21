@@ -108,9 +108,9 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
         self._spi = None
         try:
             self._spi = busio.SPI(clock, MOSI=data)
-            while not self._spi.try_lock():
-                pass
+            self._spi.try_lock()
             self._spi.configure(baudrate=baudrate)
+            self._spi.unlock()
 
         except (NotImplementedError, ValueError):
             self.dpin = digitalio.DigitalInOut(data)
@@ -145,7 +145,6 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
         self.fill(0)
         self.show()
         if self._spi:
-            self._spi.unlock()
             self._spi.deinit()
         else:
             self.dpin.deinit()
@@ -174,7 +173,9 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
 
     def _transmit(self, buffer: ReadableBuffer) -> None:
         if self._spi:
+            self._spi.try_lock()
             self._spi.write(buffer)
+            self._spi.unlock()
         else:
             self._ds_writebytes(buffer)
 
