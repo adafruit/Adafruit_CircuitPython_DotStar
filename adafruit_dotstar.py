@@ -185,5 +185,5 @@ class DotStar(adafruit_pixelbuf.PixelBuf):
                 self.dpin.value = b & 0x80
                 self.cpin.value = True
                 self.cpin.value = False
-                b = b << 1  # noqa: PLW2901
+                b <<= 1  # noqa: PLW2901
         self.cpin.value = False

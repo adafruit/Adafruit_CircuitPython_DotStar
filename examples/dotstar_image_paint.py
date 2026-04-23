@@ -40,7 +40,7 @@ IMG = Image.open(FILENAME).convert("RGB")
 PIXELS = IMG.load()
 WIDTH = IMG.size[0]
 HEIGHT = IMG.size[1]
-print("%dx%d pixels" % IMG.size)
+print(f"{IMG.size[0]}x{IMG.size[1]} pixels")
 
 HEIGHT = min(HEIGHT, NUMPIXELS)
 
